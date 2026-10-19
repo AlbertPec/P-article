@@ -7,3 +7,9 @@ Skracanie artykułu z zachowaniem sensu. Zapisanie widzianych przez użytkownika
 
 ### Opcjonalna funkcjonalność
 Automatyczne proponowanie zbliżonych tematycznie artykułów.
+
+## Status log
+
+| data       | status |
+|------------|--------|
+| 23.10.2026 | Eksperymentowanie z modelami do skracania artykułów |

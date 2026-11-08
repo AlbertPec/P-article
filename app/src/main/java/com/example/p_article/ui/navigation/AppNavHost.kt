@@ -2,6 +2,7 @@ package com.example.p_article.ui.navigation
 
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.LocalActivity
+import androidx.compose.animation.ExitTransition
 import androidx.compose.runtime.Composable
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
@@ -37,8 +38,9 @@ fun AppNavHost(
         composable(
             route = ARTICLE,
             arguments = listOf(navArgument("articleId") { type = NavType.IntType }),
+            popExitTransition = { ExitTransition.None },
         ) {
-            ArticleScreen(onBack = { navController.popBackStack() })
+            ArticleScreen(onFinished = { navController.popBackStack() })
         }
         composable(ADD_ARTICLES) {
             AddArticlesScreen(

@@ -35,7 +35,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalWindowInfo
@@ -45,6 +44,12 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import com.example.p_article.data.ReadingStatus
+import com.example.p_article.ui.theme.ArticleDeleteButton
+import com.example.p_article.ui.theme.ArticleDeleteIcon
+import com.example.p_article.ui.theme.ArticleSwipeBackdrop
+import com.example.p_article.ui.theme.ArticleSwipeFinished
+import com.example.p_article.ui.theme.ArticleSwipeKeep
+import com.example.p_article.ui.theme.ArticleSwipeLabel
 import kotlinx.coroutines.launch
 import kotlin.math.abs
 import kotlin.math.roundToInt
@@ -89,15 +94,16 @@ fun ArticleScreen(onFinished: () -> Unit, viewModel: ArticleViewModel = viewMode
         Box(
             Modifier
                 .fillMaxSize()
+                .background(ArticleSwipeBackdrop)
                 .background(
-                    if (offsetX.value >= 0) Color(0xFF2E7D32).copy(alpha = currentAlpha * 0.8f)
-                    else Color(0xFFECCE2A).copy(alpha = currentAlpha * 0.8f)
+                    if (offsetX.value >= 0) ArticleSwipeFinished.copy(alpha = currentAlpha * 0.8f)
+                    else ArticleSwipeKeep.copy(alpha = currentAlpha * 0.8f)
                 ),
             contentAlignment = if (offsetX.value >= 0) Alignment.CenterStart else Alignment.CenterEnd,
         ) {
             Text(
                 text = if (offsetX.value >= 0) "Finished" else "Keep",
-                color = Color.White.copy(alpha = currentAlpha),
+                color = ArticleSwipeLabel.copy(alpha = currentAlpha),
                 style = MaterialTheme.typography.headlineLarge,
                 modifier = Modifier.padding(32.dp),
             )
@@ -144,8 +150,10 @@ fun ArticleScreen(onFinished: () -> Unit, viewModel: ArticleViewModel = viewMode
                             onClick = ::trash,
                             enabled = !isLeaving,
                             colors = IconButtonDefaults.filledIconButtonColors(
-                                containerColor = Color.Black.copy(alpha = 0.55f),
-                                contentColor = Color.White,
+                                containerColor = ArticleDeleteButton,
+                                contentColor = ArticleDeleteIcon,
+                                disabledContainerColor = ArticleDeleteButton,
+                                disabledContentColor = ArticleDeleteIcon,
                             ),
                             modifier = Modifier
                                 .align(Alignment.TopEnd)

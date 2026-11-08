@@ -69,3 +69,11 @@ val DarkSurfaceContainerHighest = Color(0xFF36343B)
 // Article title drawn over a photo, the same in both modes
 val ArticleTitleOnImage = Color(0xFFFFFFFF)
 val ArticleTitleScrim = Color(0x80000000)
+
+// Article swipe actions and delete button, the same in both modes
+val ArticleSwipeBackdrop = Color(0xFF000000)
+val ArticleSwipeFinished = Color(0xFF2E7D32)
+val ArticleSwipeKeep = Color(0xFFECCE2A)
+val ArticleSwipeLabel = Color(0xFFFFFFFF)
+val ArticleDeleteButton = Color(0x8C000000)
+val ArticleDeleteIcon = Color(0xFFFFFFFF)

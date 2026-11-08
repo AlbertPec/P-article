@@ -6,7 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.p_article.data.Article
 import com.example.p_article.data.ArticleRepository
 import com.example.p_article.data.FakeArticleRepository
-import com.example.p_article.data.SwipeDecision
+import com.example.p_article.data.ReadingStatus
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -22,5 +22,5 @@ class ArticleViewModel @JvmOverloads constructor(
 
     init { viewModelScope.launch { _article.value = repo.getArticle(articleId) } }
 
-    fun mark(decision: SwipeDecision) = repo.markArticle(articleId, decision)
+    fun mark(decision: ReadingStatus) = repo.markArticle(articleId, decision)
 }

@@ -1,5 +1,6 @@
 package com.example.p_article.ui.navigation
 
+import androidx.compose.animation.ExitTransition
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -31,8 +32,9 @@ fun AppNavHost(
         composable(
             route = ARTICLE,
             arguments = listOf(navArgument("articleId") { type = NavType.IntType }),
+            popExitTransition = { ExitTransition.None },
         ) {
-            ArticleScreen(onBack = { navController.popBackStack() })
+            ArticleScreen(onFinished = { navController.popBackStack() })
         }
         composable(SETTINGS) {
             SettingsScreen(

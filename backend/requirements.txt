@@ -1,0 +1,5 @@
+pymupdf==2.1
+pymupdf4llm==2.1
+pymupdf-layout==2.1
+fastapi==0.162.2
+uvicorn==0.54.0

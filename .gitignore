@@ -73,3 +73,7 @@ kotlin-ide/
 .claude/settings.local.json
 **/xcuserdata
 .test-federation.*
+# Parser server
+backend/.venv/
+backend/output/
+__pycache__/

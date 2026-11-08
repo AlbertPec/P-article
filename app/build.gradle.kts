@@ -17,6 +17,11 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        // 10.0.2.2 is how the emulator reaches the computer it runs on. See backend/README.md.
+        val parserServerUrl = providers.gradleProperty("parserServerUrl")
+            .getOrElse("http://10.0.2.2:8000")
+        buildConfigField("String", "PARSER_SERVER_URL", "\"$parserServerUrl\"")
     }
 
     buildTypes {
@@ -32,6 +37,7 @@ android {
         targetCompatibility = JavaVersion.VERSION_11
     }
     buildFeatures {
+        buildConfig = true
         compose = true
     }
 }

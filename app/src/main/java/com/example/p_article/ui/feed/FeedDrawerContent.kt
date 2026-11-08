@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.AddCircle
 import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalDrawerSheet
@@ -25,7 +26,10 @@ fun FeedDrawerContent(onItemClick: () -> Unit) {
             "Settings" to Icons.Outlined.Settings,
             "Add articles" to Icons.Outlined.AddCircle,
             "History" to ImageVector.vectorResource(R.drawable.ic_history),
-        ).forEach { (label, icon) ->
+        ).forEachIndexed { index, (label, icon) ->
+            if (index > 0) {
+                HorizontalDivider(Modifier.padding(NavigationDrawerItemDefaults.ItemPadding))
+            }
             NavigationDrawerItem(
                 icon = { Icon(icon, contentDescription = null) },
                 label = { Text(label) },

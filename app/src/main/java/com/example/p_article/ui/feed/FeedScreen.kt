@@ -27,7 +27,11 @@ import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun FeedScreen(onArticleClick: (Int) -> Unit, viewModel: FeedViewModel = viewModel()) {
+fun FeedScreen(
+    onArticleClick: (Int) -> Unit,
+    onSettingsClick: () -> Unit,
+    viewModel: FeedViewModel = viewModel(),
+) {
     val articles by viewModel.articles.collectAsStateWithLifecycle()
     val drawerState = rememberDrawerState(DrawerValue.Closed)
     val scope = rememberCoroutineScope()
@@ -35,7 +39,15 @@ fun FeedScreen(onArticleClick: (Int) -> Unit, viewModel: FeedViewModel = viewMod
     ModalNavigationDrawer(
         drawerState = drawerState,
         drawerContent = {
-            FeedDrawerContent(onItemClick = { scope.launch { drawerState.close() } })
+            FeedDrawerContent(
+                onSettingsClick = {
+                    scope.launch {
+                        drawerState.close()
+                        onSettingsClick()
+                    }
+                },
+                onItemClick = { scope.launch { drawerState.close() } },
+            )
         },
     ) {
         Scaffold(

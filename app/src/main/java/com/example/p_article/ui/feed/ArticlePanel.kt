@@ -12,11 +12,12 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.example.p_article.data.Article
+import com.example.p_article.ui.theme.ArticleTitleOnImage
+import com.example.p_article.ui.theme.ArticleTitleScrim
 
 @Composable
 fun ArticlePanel(article: Article, onClick: () -> Unit, modifier: Modifier = Modifier) {
@@ -31,11 +32,11 @@ fun ArticlePanel(article: Article, onClick: () -> Unit, modifier: Modifier = Mod
             Text(
                 text = article.title,
                 style = MaterialTheme.typography.titleMedium,
-                color = Color.White,
+                color = ArticleTitleOnImage,
                 modifier = Modifier
                     .align(Alignment.BottomStart)
                     .fillMaxWidth()
-                    .background(Color.Black.copy(alpha = 0.5f))
+                    .background(ArticleTitleScrim)
                     .padding(12.dp),
             )
         }

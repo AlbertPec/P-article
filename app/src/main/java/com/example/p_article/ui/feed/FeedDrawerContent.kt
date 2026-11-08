@@ -19,12 +19,16 @@ import androidx.compose.ui.unit.dp
 import com.example.p_article.R
 
 @Composable
-fun FeedDrawerContent(onSettingsClick: () -> Unit, onItemClick: () -> Unit) {
+fun FeedDrawerContent(
+    onSettingsClick: () -> Unit,
+    onAddArticlesClick: () -> Unit,
+    onItemClick: () -> Unit,
+) {
     ModalDrawerSheet {
         Text("Menu", Modifier.padding(16.dp), style = MaterialTheme.typography.titleLarge)
         listOf(
             Triple("Settings", Icons.Outlined.Settings, onSettingsClick),
-            Triple("Add articles", Icons.Outlined.AddCircle, onItemClick),   // TODO: real action later
+            Triple("Add articles", Icons.Outlined.AddCircle, onAddArticlesClick),
             Triple("History", ImageVector.vectorResource(R.drawable.ic_history), onItemClick),   // TODO: real action later
         ).forEachIndexed { index, (label, icon, onClick) ->
             if (index > 0) {

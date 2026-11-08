@@ -30,6 +30,7 @@ import kotlinx.coroutines.launch
 fun FeedScreen(
     onArticleClick: (Int) -> Unit,
     onSettingsClick: () -> Unit,
+    onAddArticlesClick: () -> Unit,
     viewModel: FeedViewModel = viewModel(),
 ) {
     val articles by viewModel.articles.collectAsStateWithLifecycle()
@@ -44,6 +45,12 @@ fun FeedScreen(
                     scope.launch {
                         drawerState.close()
                         onSettingsClick()
+                    }
+                },
+                onAddArticlesClick = {
+                    scope.launch {
+                        drawerState.close()
+                        onAddArticlesClick()
                     }
                 },
                 onItemClick = { scope.launch { drawerState.close() } },

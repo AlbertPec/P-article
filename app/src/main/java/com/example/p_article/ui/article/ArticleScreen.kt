@@ -50,9 +50,13 @@ import com.example.p_article.ui.theme.ArticleSwipeBackdrop
 import com.example.p_article.ui.theme.ArticleSwipeFinished
 import com.example.p_article.ui.theme.ArticleSwipeKeep
 import com.example.p_article.ui.theme.ArticleSwipeLabel
+import androidx.compose.ui.res.stringResource
+import com.example.p_article.R
 import kotlinx.coroutines.launch
 import kotlin.math.abs
 import kotlin.math.roundToInt
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.TextButton
 
 @Composable
 fun ArticleScreen(onFinished: () -> Unit, viewModel: ArticleViewModel = viewModel()) {
@@ -61,6 +65,7 @@ fun ArticleScreen(onFinished: () -> Unit, viewModel: ArticleViewModel = viewMode
     val offsetX = remember { Animatable(0f) }
     val trashProgress = remember { Animatable(0f) }
     var isLeaving by remember { mutableStateOf(false) }
+    var showConfirm by remember { mutableStateOf(false) }
 
     val screenWidth = LocalWindowInfo.current.containerSize.width.toFloat()
     val threshold = screenWidth * 0.3f
@@ -102,7 +107,7 @@ fun ArticleScreen(onFinished: () -> Unit, viewModel: ArticleViewModel = viewMode
             contentAlignment = if (offsetX.value >= 0) Alignment.CenterStart else Alignment.CenterEnd,
         ) {
             Text(
-                text = if (offsetX.value >= 0) "Finished" else "Keep",
+                text = if (offsetX.value >= 0) stringResource(R.string.article_finished) else stringResource(R.string.article_keep),
                 color = ArticleSwipeLabel.copy(alpha = currentAlpha),
                 style = MaterialTheme.typography.headlineLarge,
                 modifier = Modifier.padding(32.dp),
@@ -147,7 +152,7 @@ fun ArticleScreen(onFinished: () -> Unit, viewModel: ArticleViewModel = viewMode
                             modifier = Modifier.fillMaxWidth().aspectRatio(16f / 9f),
                         )
                         FilledIconButton(
-                            onClick = ::trash,
+                            onClick = { showConfirm = true },
                             enabled = !isLeaving,
                             colors = IconButtonDefaults.filledIconButtonColors(
                                 containerColor = ArticleDeleteButton,
@@ -165,13 +170,34 @@ fun ArticleScreen(onFinished: () -> Unit, viewModel: ArticleViewModel = viewMode
                                     alpha = (1f - swipe) * (1f - trashProgress.value)
                                 },
                         ) {
-                            Icon(Icons.Default.Delete, contentDescription = "Don't show this article")
+                            Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.dont_show_this_article))
                         }
                     }
                     Text(a.title, Modifier.padding(16.dp), style = MaterialTheme.typography.headlineSmall)
                     Text(a.content, Modifier.padding(horizontal = 16.dp))
                 }
             }
+        }
+
+        if (showConfirm) {
+            AlertDialog(
+                onDismissRequest = { showConfirm = false },
+                title = { Text(stringResource(R.string.dont_show_this_article)) },
+                text = { Text(stringResource(R.string.article_hidden_message)) },
+                confirmButton = {
+                    TextButton(onClick = {
+                        showConfirm = false
+                        trash()
+                    }) {
+                        Text(stringResource(R.string.hide))
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showConfirm = false }) {
+                        Text(stringResource(R.string.cancel))
+                    }
+                },
+            )
         }
     }
 }

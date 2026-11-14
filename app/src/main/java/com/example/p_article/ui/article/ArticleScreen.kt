@@ -50,6 +50,8 @@ import com.example.p_article.ui.theme.ArticleSwipeBackdrop
 import com.example.p_article.ui.theme.ArticleSwipeFinished
 import com.example.p_article.ui.theme.ArticleSwipeKeep
 import com.example.p_article.ui.theme.ArticleSwipeLabel
+import androidx.compose.ui.res.stringResource
+import com.example.p_article.R
 import kotlinx.coroutines.launch
 import kotlin.math.abs
 import kotlin.math.roundToInt
@@ -105,7 +107,7 @@ fun ArticleScreen(onFinished: () -> Unit, viewModel: ArticleViewModel = viewMode
             contentAlignment = if (offsetX.value >= 0) Alignment.CenterStart else Alignment.CenterEnd,
         ) {
             Text(
-                text = if (offsetX.value >= 0) "Finished" else "Keep",
+                text = if (offsetX.value >= 0) stringResource(R.string.article_finished) else stringResource(R.string.article_keep),
                 color = ArticleSwipeLabel.copy(alpha = currentAlpha),
                 style = MaterialTheme.typography.headlineLarge,
                 modifier = Modifier.padding(32.dp),
@@ -168,7 +170,7 @@ fun ArticleScreen(onFinished: () -> Unit, viewModel: ArticleViewModel = viewMode
                                     alpha = (1f - swipe) * (1f - trashProgress.value)
                                 },
                         ) {
-                            Icon(Icons.Default.Delete, contentDescription = "Don't show this article")
+                            Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.dont_show_this_article))
                         }
                     }
                     Text(a.title, Modifier.padding(16.dp), style = MaterialTheme.typography.headlineSmall)
@@ -180,19 +182,19 @@ fun ArticleScreen(onFinished: () -> Unit, viewModel: ArticleViewModel = viewMode
         if (showConfirm) {
             AlertDialog(
                 onDismissRequest = { showConfirm = false },
-                title = { Text("Don't show this article?") },
-                text = { Text("This article will be hidden and won't appear again.") },
+                title = { Text(stringResource(R.string.dont_show_this_article)) },
+                text = { Text(stringResource(R.string.article_hidden_message)) },
                 confirmButton = {
                     TextButton(onClick = {
                         showConfirm = false
                         trash()
                     }) {
-                        Text("Hide")
+                        Text(stringResource(R.string.hide))
                     }
                 },
                 dismissButton = {
                     TextButton(onClick = { showConfirm = false }) {
-                        Text("Cancel")
+                        Text(stringResource(R.string.cancel))
                     }
                 },
             )

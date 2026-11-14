@@ -44,9 +44,12 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.p_article.R
 
 private val DOWNLOADS_URI: Uri =
     Uri.parse("content://com.android.externalstorage.documents/document/primary%3ADownload")
@@ -84,10 +87,10 @@ fun AddArticlesScreen(onBack: () -> Unit, viewModel: AddArticlesViewModel) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Add articles") },
+                title = { Text(stringResource(R.string.add_articles)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back))
                     }
                 },
             )
@@ -98,11 +101,11 @@ fun AddArticlesScreen(onBack: () -> Unit, viewModel: AddArticlesViewModel) {
                 onClick = { picker.launch(arrayOf("application/pdf")) },
                 modifier = Modifier.fillMaxWidth().padding(16.dp),
             ) {
-                Text("Choose PDFs")
+                Text(stringResource(R.string.choose_pdfs))
             }
             if (permissionDenied) {
                 Text(
-                    "Allow access to local network devices so the app can reach the parser server.",
+                    stringResource(R.string.local_network_permission_rationale),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.error,
                     modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 16.dp),
@@ -110,7 +113,7 @@ fun AddArticlesScreen(onBack: () -> Unit, viewModel: AddArticlesViewModel) {
             }
             if (queue.isEmpty()) {
                 Text(
-                    "To choose several files, press and hold the first one, then tap the others.",
+                    stringResource(R.string.choose_multiple_files_hint),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(horizontal = 16.dp),
@@ -142,7 +145,7 @@ fun AddArticlesScreen(onBack: () -> Unit, viewModel: AddArticlesViewModel) {
 private fun ConfirmDialog(files: List<SelectedFile>, onConfirm: () -> Unit, onDismiss: () -> Unit) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(if (files.size == 1) "Add this article?" else "Add ${files.size} articles?") },
+        title = { Text(pluralStringResource(R.plurals.add_articles_count, files.size, files.size)) },
         text = {
             Column(
                 verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -151,8 +154,8 @@ private fun ConfirmDialog(files: List<SelectedFile>, onConfirm: () -> Unit, onDi
                 files.forEach { Text(it.name) }
             }
         },
-        confirmButton = { TextButton(onClick = onConfirm) { Text("Add") } },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
+        confirmButton = { TextButton(onClick = onConfirm) { Text(stringResource(R.string.add)) } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) } },
     )
 }
 
@@ -164,9 +167,9 @@ private fun QueuedArticleRow(article: QueuedArticle) {
         supportingContent = {
             Text(
                 when (status) {
-                    ArticleStatus.Waiting -> "Waiting"
-                    ArticleStatus.Parsing -> "Parsing"
-                    is ArticleStatus.Saved -> "Saved as ${status.folder}"
+                    ArticleStatus.Waiting -> stringResource(R.string.status_waiting)
+                    ArticleStatus.Parsing -> stringResource(R.string.status_parsing)
+                    is ArticleStatus.Saved -> stringResource(R.string.status_saved, status.folder)
                     is ArticleStatus.Failed -> status.message
                 },
             )

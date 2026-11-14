@@ -5,6 +5,7 @@ import android.net.Uri
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.p_article.data.ArticleUploadRepository
+import com.example.p_article.R
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -68,7 +69,7 @@ class AddArticlesViewModel(application: Application) : AndroidViewModel(applicat
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                ArticleStatus.Failed(e.message ?: "Something went wrong")
+                ArticleStatus.Failed(e.message ?: getApplication<Application>().getString(R.string.error_something_went_wrong))
             }
             setStatus(next.id, status)
         }

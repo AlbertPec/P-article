@@ -5,6 +5,7 @@ import android.net.Uri
 import android.provider.OpenableColumns
 import android.util.Log
 import com.example.p_article.BuildConfig
+import com.example.p_article.R
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONException
@@ -17,7 +18,8 @@ import java.net.URL
 import java.net.URLEncoder
 
 class ArticleUploadRepository(context: Context) {
-    private val resolver = context.applicationContext.contentResolver
+    private val appContext = context.applicationContext
+    private val resolver = appContext.contentResolver
 
     suspend fun fileName(uri: Uri): String = withContext(Dispatchers.IO) {
         resolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)?.use { cursor ->
@@ -42,10 +44,10 @@ class ArticleUploadRepository(context: Context) {
                 connection.connect()
             } catch (e: IOException) {
                 Log.w(TAG, "Connecting to ${BuildConfig.PARSER_SERVER_URL} failed", e)
-                throw IOException("Can't reach the parser server")
+                throw IOException(appContext.getString(R.string.error_cant_reach_server))
             }
 
-            val input = resolver.openInputStream(uri) ?: throw FileNotFoundException("File not found")
+            val input = resolver.openInputStream(uri) ?: throw FileNotFoundException(appContext.getString(R.string.error_file_not_found))
             input.use { it.copyTo(connection.outputStream) }
             connection.outputStream.close()
 
@@ -57,7 +59,7 @@ class ArticleUploadRepository(context: Context) {
             }
         } catch (e: SocketTimeoutException) {
             Log.w(TAG, "Uploading $fileName timed out", e)
-            throw IOException("The parser server took too long to respond")
+            throw IOException(appContext.getString(R.string.error_server_timeout))
         } finally {
             connection.disconnect()
         }
@@ -68,7 +70,7 @@ class ArticleUploadRepository(context: Context) {
         return try {
             JSONObject(body).getString("detail")
         } catch (_: JSONException) {
-            "The server returned an error (${connection.responseCode})"
+            appContext.getString(R.string.error_server_returned, connection.responseCode)
         }
     }
 

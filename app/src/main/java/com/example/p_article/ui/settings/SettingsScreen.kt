@@ -18,6 +18,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import com.example.p_article.R
 
@@ -27,10 +28,10 @@ fun SettingsScreen(darkMode: Boolean, onDarkModeChange: (Boolean) -> Unit, onBac
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Settings") },
+                title = { Text(stringResource(R.string.settings)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back))
                     }
                 },
             )
@@ -38,7 +39,7 @@ fun SettingsScreen(darkMode: Boolean, onDarkModeChange: (Boolean) -> Unit, onBac
     ) { padding ->
         Column(Modifier.padding(padding).verticalScroll(rememberScrollState())) {
             ListItem(
-                headlineContent = { Text("Dark mode") },
+                headlineContent = { Text(stringResource(R.string.dark_mode)) },
                 leadingContent = {
                     Icon(painterResource(R.drawable.ic_dark_mode), contentDescription = null)
                 },

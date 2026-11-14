@@ -14,6 +14,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.dp
 import com.example.p_article.R
@@ -25,11 +26,11 @@ fun FeedDrawerContent(
     onItemClick: () -> Unit,
 ) {
     ModalDrawerSheet {
-        Text("Menu", Modifier.padding(16.dp), style = MaterialTheme.typography.titleLarge)
+        Text(stringResource(R.string.menu), Modifier.padding(16.dp), style = MaterialTheme.typography.titleLarge)
         listOf(
-            Triple("Settings", Icons.Outlined.Settings, onSettingsClick),
-            Triple("Add articles", Icons.Outlined.AddCircle, onAddArticlesClick),
-            Triple("History", ImageVector.vectorResource(R.drawable.ic_history), onItemClick),   // TODO: real action later
+            Triple(stringResource(R.string.settings), Icons.Outlined.Settings, onSettingsClick),
+            Triple(stringResource(R.string.add_articles), Icons.Outlined.AddCircle, onAddArticlesClick),
+            Triple(stringResource(R.string.history), ImageVector.vectorResource(R.drawable.ic_history), onItemClick),   // TODO: real action later
         ).forEachIndexed { index, (label, icon, onClick) ->
             if (index > 0) {
                 HorizontalDivider(Modifier.padding(NavigationDrawerItemDefaults.ItemPadding))

@@ -53,6 +53,8 @@ import com.example.p_article.ui.theme.ArticleSwipeLabel
 import kotlinx.coroutines.launch
 import kotlin.math.abs
 import kotlin.math.roundToInt
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.TextButton
 
 @Composable
 fun ArticleScreen(onFinished: () -> Unit, viewModel: ArticleViewModel = viewModel()) {
@@ -61,6 +63,7 @@ fun ArticleScreen(onFinished: () -> Unit, viewModel: ArticleViewModel = viewMode
     val offsetX = remember { Animatable(0f) }
     val trashProgress = remember { Animatable(0f) }
     var isLeaving by remember { mutableStateOf(false) }
+    var showConfirm by remember { mutableStateOf(false) }
 
     val screenWidth = LocalWindowInfo.current.containerSize.width.toFloat()
     val threshold = screenWidth * 0.3f
@@ -147,7 +150,7 @@ fun ArticleScreen(onFinished: () -> Unit, viewModel: ArticleViewModel = viewMode
                             modifier = Modifier.fillMaxWidth().aspectRatio(16f / 9f),
                         )
                         FilledIconButton(
-                            onClick = ::trash,
+                            onClick = { showConfirm = true },
                             enabled = !isLeaving,
                             colors = IconButtonDefaults.filledIconButtonColors(
                                 containerColor = ArticleDeleteButton,
@@ -172,6 +175,27 @@ fun ArticleScreen(onFinished: () -> Unit, viewModel: ArticleViewModel = viewMode
                     Text(a.content, Modifier.padding(horizontal = 16.dp))
                 }
             }
+        }
+
+        if (showConfirm) {
+            AlertDialog(
+                onDismissRequest = { showConfirm = false },
+                title = { Text("Don't show this article?") },
+                text = { Text("This article will be hidden and won't appear again.") },
+                confirmButton = {
+                    TextButton(onClick = {
+                        showConfirm = false
+                        trash()
+                    }) {
+                        Text("Hide")
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showConfirm = false }) {
+                        Text("Cancel")
+                    }
+                },
+            )
         }
     }
 }

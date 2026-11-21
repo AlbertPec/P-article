@@ -1,0 +1,809 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>P-article Admin</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%234f46e5'/%3E%3Cpath d='M11 23V9h6a4.5 4.5 0 0 1 0 9h-6' fill='none' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<style>
+  :root {
+    --bg: #f6f7f9;
+    --surface: #ffffff;
+    --surface-2: #f9fafb;
+    --text: #111827;
+    --text-2: #4b5563;
+    --muted: #9ca3af;
+    --border: #e5e7eb;
+    --border-strong: #d1d5db;
+    --accent: #4f46e5;
+    --accent-hover: #4338ca;
+    --accent-soft: #eef2ff;
+    --ok: #059669;
+    --ok-soft: #ecfdf5;
+    --bad: #dc2626;
+    --bad-soft: #fef2f2;
+    --warn: #d97706;
+    --warn-soft: #fffbeb;
+    --code-bg: #0f172a;
+    --code-text: #e2e8f0;
+    --shadow: 0 1px 2px rgb(16 24 40 / .04), 0 1px 3px rgb(16 24 40 / .06);
+    --radius: 14px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0b0d12;
+      --surface: #14171f;
+      --surface-2: #1a1e28;
+      --text: #f3f4f6;
+      --text-2: #b4bac6;
+      --muted: #6b7280;
+      --border: #262b36;
+      --border-strong: #353b48;
+      --accent: #818cf8;
+      --accent-hover: #a5b4fc;
+      --accent-soft: #1e1b4b;
+      --ok: #34d399;
+      --ok-soft: #052e22;
+      --bad: #f87171;
+      --bad-soft: #3b0d0d;
+      --warn: #fbbf24;
+      --warn-soft: #3a2a05;
+      --code-bg: #0a0c10;
+      --code-text: #e2e8f0;
+      --shadow: 0 1px 2px rgb(0 0 0 / .3);
+    }
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font: 14px/1.5 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .mono { font-family: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace; }
+  svg { flex: none; }
+
+  /* Top bar */
+  .topbar {
+    position: sticky; top: 0; z-index: 10;
+    background: color-mix(in srgb, var(--bg) 82%, transparent);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--border);
+  }
+  .topbar-inner {
+    max-width: 1240px; margin: 0 auto; padding: 14px 24px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .brand { display: flex; align-items: center; gap: 10px; font-weight: 650; font-size: 15px; letter-spacing: -.01em; }
+  .brand-mark { width: 28px; height: 28px; border-radius: 8px; background: var(--accent); display: grid; place-items: center; }
+  .brand small { font-weight: 500; color: var(--muted); }
+  .spacer { flex: 1; }
+
+  .pill {
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 4px 11px; border-radius: 999px; font-size: 12.5px; font-weight: 550;
+    border: 1px solid var(--border); background: var(--surface); color: var(--text-2);
+    white-space: nowrap;
+  }
+  .pill.ok { color: var(--ok); background: var(--ok-soft); border-color: transparent; }
+  .pill.bad { color: var(--bad); background: var(--bad-soft); border-color: transparent; }
+  .pill.warn { color: var(--warn); background: var(--warn-soft); border-color: transparent; }
+  .pill.accent { color: var(--accent); background: var(--accent-soft); border-color: transparent; }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+  .pill.ok .dot { box-shadow: 0 0 0 0 currentColor; animation: pulse 2s infinite; }
+  @keyframes pulse {
+    0% { box-shadow: 0 0 0 0 color-mix(in srgb, currentColor 50%, transparent); }
+    70% { box-shadow: 0 0 0 6px transparent; }
+    100% { box-shadow: 0 0 0 0 transparent; }
+  }
+
+  /* Layout */
+  main {
+    max-width: 1240px; margin: 0 auto; padding: 24px;
+    display: grid; gap: 20px; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); align-items: start;
+  }
+  .col { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; min-width: 0; }
+  @media (max-width: 980px) { main { grid-template-columns: minmax(0, 1fr); padding: 16px; } .sticky { position: static !important; } .topbar-inner { padding: 12px 16px; } }
+  .sticky { position: sticky; top: 76px; }
+
+  .card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    box-shadow: var(--shadow); overflow: hidden;
+  }
+  .card-head { padding: 18px 20px 0; display: flex; align-items: flex-start; gap: 12px; }
+  .card-head h2 { margin: 0; font-size: 15px; font-weight: 650; letter-spacing: -.01em; }
+  .card-head p { margin: 2px 0 0; color: var(--text-2); font-size: 13px; }
+  .card-body { padding: 16px 20px 20px; }
+  .icon-tile {
+    width: 34px; height: 34px; border-radius: 9px; display: grid; place-items: center;
+    background: var(--accent-soft); color: var(--accent); flex: none;
+  }
+
+  /* Buttons */
+  button {
+    font: inherit; font-weight: 550; font-size: 13px;
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    height: 32px; padding: 0 12px; border-radius: 8px; cursor: pointer;
+    border: 1px solid var(--border-strong); background: var(--surface); color: var(--text);
+    transition: background .15s, border-color .15s, color .15s, transform .05s;
+  }
+  button:hover { background: var(--surface-2); }
+  button:active { transform: translateY(1px); }
+  button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  button.primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+  button.ghost { border-color: transparent; background: transparent; color: var(--text-2); }
+  button.ghost:hover { background: var(--surface-2); color: var(--text); }
+  button.icon { width: 32px; padding: 0; }
+  button:disabled { opacity: .45; cursor: default; }
+  @media (prefers-color-scheme: dark) { button.primary { color: #0b0d12; } }
+
+  /* Server card */
+  .hero {
+    background:
+      radial-gradient(120% 140% at 100% 0%, color-mix(in srgb, var(--accent) 14%, transparent), transparent 60%),
+      var(--surface);
+  }
+  .label { font-size: 11.5px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+  .url-row { display: flex; align-items: center; gap: 10px; margin: 6px 0 4px; flex-wrap: wrap; }
+  .url { font-size: clamp(20px, 3.2vw, 30px); font-weight: 650; letter-spacing: -.02em; word-break: break-all; }
+  .hint { color: var(--text-2); font-size: 13px; }
+  .rows { margin-top: 16px; border-top: 1px solid var(--border); }
+  .kv { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+  .kv:last-child { border-bottom: 0; padding-bottom: 0; }
+  .kv[hidden] { display: none; }
+  .kv .k { width: 110px; flex: none; color: var(--text-2); font-size: 13px; }
+  .kv .v { flex: 1; min-width: 0; font-size: 12.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  /* Drop zone */
+  .drop {
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
+    padding: 30px 20px; text-align: center; cursor: pointer;
+    border: 1.5px dashed var(--border-strong); border-radius: 12px; background: var(--surface-2);
+    transition: border-color .15s, background .15s;
+  }
+  .drop:hover, .drop.over { border-color: var(--accent); background: var(--accent-soft); }
+  .drop .icon-tile { width: 44px; height: 44px; border-radius: 12px; background: var(--surface); box-shadow: var(--shadow); }
+  .drop strong { font-weight: 600; }
+  .drop strong span { color: var(--accent); }
+  .drop .hint { font-size: 12.5px; }
+
+  /* Jobs */
+  .jobs-head { display: flex; align-items: center; gap: 8px; margin: 22px 0 10px; }
+  .jobs-head h3 { margin: 0; font-size: 13px; font-weight: 650; }
+  .count { font-size: 12px; color: var(--muted); }
+  .jobs { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; }
+  .empty {
+    padding: 22px; text-align: center; color: var(--muted); font-size: 13px;
+    border: 1px solid var(--border); border-radius: 12px;
+  }
+  .job { border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px; background: var(--surface); }
+  .job-top { display: flex; align-items: center; gap: 10px; }
+  .job-icon { width: 30px; height: 30px; border-radius: 8px; display: grid; place-items: center; flex: none; }
+  .job-icon.queued { background: var(--surface-2); color: var(--muted); }
+  .job-icon.running { background: var(--warn-soft); color: var(--warn); }
+  .job-icon.done { background: var(--ok-soft); color: var(--ok); }
+  .job-icon.failed { background: var(--bad-soft); color: var(--bad); }
+  .job-name { flex: 1; min-width: 0; }
+  .job-name b { display: block; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .job-name span { font-size: 12.5px; color: var(--text-2); }
+  .job-time { font-size: 12.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+  .spinner {
+    width: 14px; height: 14px; border-radius: 50%;
+    border: 2px solid currentColor; border-right-color: transparent; animation: spin .8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .steps { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 4px; margin-top: 12px; }
+  .step { display: grid; gap: 5px; }
+  .bar { height: 5px; border-radius: 99px; background: var(--border); overflow: hidden; position: relative; }
+  .step.done .bar { background: var(--ok); }
+  .step.current .bar { background: color-mix(in srgb, var(--warn) 30%, transparent); }
+  .step.current .bar::after {
+    content: ""; position: absolute; inset: 0; width: 40%; border-radius: 99px; background: var(--warn);
+    animation: slide 1.3s ease-in-out infinite;
+  }
+  @keyframes slide { from { left: -40%; } to { left: 100%; } }
+  .step.failed .bar { background: var(--bad); }
+  .step small { font-size: 11px; color: var(--muted); text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .step.done small { color: var(--text-2); }
+  .step.current small { color: var(--warn); font-weight: 600; }
+  .step.failed small { color: var(--bad); font-weight: 600; }
+
+  .log-toggle { margin-top: 10px; height: 26px; padding: 0 8px; font-size: 12px; }
+  .log-toggle svg { transition: transform .15s; }
+  .job.open .log-toggle svg { transform: rotate(90deg); }
+  .log {
+    display: none; margin: 8px 0 0; padding: 12px 14px; max-height: 300px; overflow: auto;
+    background: var(--code-bg); color: var(--code-text); border-radius: 10px;
+    font-size: 12px; line-height: 1.6; white-space: pre-wrap; word-break: break-word;
+  }
+  .job.open .log { display: block; }
+
+  /* Config form */
+  .form { display: grid; gap: 22px; }
+  .group { display: grid; gap: 14px; }
+  .group + .group { padding-top: 20px; border-top: 1px solid var(--border); }
+  .group-title { font-size: 11.5px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+  .field { display: grid; gap: 6px; }
+  .field > label, .field > .field-label { font-size: 13px; font-weight: 600; color: var(--text); }
+  .field .help { font-size: 12.5px; color: var(--text-2); min-height: 1.5em; }
+  .input, .textarea {
+    width: 100%; font: inherit; font-size: 13.5px; color: var(--text);
+    padding: 8px 11px; border: 1px solid var(--border-strong); border-radius: 8px; background: var(--surface);
+    transition: border-color .15s, box-shadow .15s; outline: none;
+  }
+  .input { height: 36px; }
+  .textarea { min-height: 84px; resize: vertical; line-height: 1.5; }
+  .input:focus, .textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent); }
+  .input::placeholder, .textarea::placeholder { color: var(--muted); }
+  .toolbar {
+    display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+    margin: 4px -20px -20px; padding: 14px 20px; border-top: 1px solid var(--border); background: var(--surface-2);
+  }
+  .state { font-size: 12.5px; color: var(--muted); display: inline-flex; align-items: center; gap: 6px; }
+  .state.dirty { color: var(--warn); }
+  .state.bad { color: var(--bad); }
+  .state.ok { color: var(--ok); }
+  kbd {
+    font: 11px ui-monospace, Menlo, monospace; padding: 1px 5px; border-radius: 4px;
+    border: 1px solid var(--border-strong); color: var(--text-2); background: var(--surface-2);
+  }
+  .error-box {
+    display: none; margin-top: 12px; padding: 10px 12px; border-radius: 10px;
+    background: var(--bad-soft); color: var(--bad); font-size: 13px;
+  }
+  .error-box.show { display: block; }
+
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip {
+    height: 28px; padding: 0 11px; border-radius: 999px; font-size: 12.5px; font-weight: 500;
+    border: 1px solid var(--border); background: var(--surface); color: var(--text-2);
+  }
+  .chip:hover { border-color: var(--border-strong); color: var(--text); background: var(--surface); }
+  .chip.active { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); font-weight: 600; }
+  .ratio { display: flex; gap: 10px; flex-wrap: wrap; }
+  .ratio label { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-2); }
+  .ratio .input { width: 90px; }
+
+  /* Toast */
+  .toasts { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); display: grid; gap: 8px; z-index: 50; }
+  .toast {
+    display: flex; align-items: center; gap: 8px; padding: 10px 14px; border-radius: 10px;
+    background: var(--text); color: var(--bg); font-size: 13px; font-weight: 500;
+    box-shadow: 0 10px 30px rgb(0 0 0 / .2); animation: rise .2s ease-out;
+  }
+  .toast.bad { background: var(--bad); color: #fff; }
+  @keyframes rise { from { opacity: 0; transform: translateY(8px); } }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <div class="brand">
+      <div class="brand-mark">
+        <svg width="16" height="16" viewBox="0 0 32 32"><path d="M11 23V9h6a4.5 4.5 0 0 1 0 9h-6" fill="none" stroke="white" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      P-article <small>Admin</small>
+    </div>
+    <div class="spacer"></div>
+    <span class="pill" id="top-status"><span class="dot"></span><span>Checking…</span></span>
+  </div>
+</header>
+
+<main>
+  <div class="col">
+    <!-- Server -->
+    <section class="card hero">
+      <div class="card-head">
+        <div class="icon-tile">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M12 18h.01"/></svg>
+        </div>
+        <div>
+          <h2>Connect the app</h2>
+          <p>Use this address on a phone in the same Wi-Fi network.</p>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="label">Server address</div>
+        <div class="url-row">
+          <span class="url mono" id="url">…</span>
+          <button class="icon" id="copy-url" title="Copy address" data-copy-target="url"></button>
+        </div>
+        <div class="hint" id="reach-text">Checking the server…</div>
+
+        <div class="rows">
+          <div class="kv" id="other-row" hidden>
+            <span class="k">Also</span>
+            <span class="v mono" id="other"></span>
+          </div>
+          <div class="kv">
+            <span class="k">Emulator</span>
+            <span class="v mono" id="emulator"></span>
+            <button class="icon ghost" title="Copy" data-copy-target="emulator"></button>
+          </div>
+          <div class="kv">
+            <span class="k">Build for phone</span>
+            <span class="v mono" id="build"></span>
+            <button class="icon ghost" title="Copy" data-copy-target="build"></button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Upload -->
+    <section class="card">
+      <div class="card-head">
+        <div class="icon-tile">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M16 13H8M16 17H8M10 9H8"/></svg>
+        </div>
+        <div>
+          <h2>Add articles</h2>
+          <p>Each PDF runs through the whole pipeline, one after another.</p>
+        </div>
+      </div>
+      <div class="card-body">
+        <label class="drop" id="drop">
+          <input type="file" id="file" accept=".pdf,application/pdf" multiple hidden>
+          <div class="icon-tile">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg>
+          </div>
+          <strong>Drop PDFs here or <span>browse</span></strong>
+          <span class="hint">Finished articles appear in the app right away.</span>
+        </label>
+
+        <div class="jobs-head">
+          <h3>Jobs</h3>
+          <span class="count" id="job-count"></span>
+        </div>
+        <div class="jobs" id="jobs">
+          <div class="empty">No jobs yet. Add a PDF to start.</div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Config -->
+  <div class="col">
+    <section class="card">
+      <div class="card-head">
+        <div class="icon-tile">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>
+        </div>
+        <div style="min-width:0">
+          <h2>Rewrite style</h2>
+          <p>How the parts are rewritten. Applies to jobs that start after you save.</p>
+        </div>
+      </div>
+      <div class="card-body">
+        <form class="form" id="config-form" autocomplete="off" onsubmit="return false">
+          <div class="group">
+            <div class="group-title">Reader</div>
+            <div class="field">
+              <label for="audience">Audience</label>
+              <input class="input" id="audience" data-field="audience" placeholder="e.g. curious adults with no background in the field">
+              <div class="help">Who the text is written for. The agent decides what they already know from this.</div>
+            </div>
+            <div class="field">
+              <label for="language">Language</label>
+              <input class="input" id="language" data-field="language" list="languages" placeholder="same as the original">
+              <datalist id="languages">
+                <option value="same as the original"></option>
+                <option value="Polish"></option>
+                <option value="English"></option>
+              </datalist>
+              <div class="help">"same as the original", or a language to translate into, such as Polish.</div>
+            </div>
+          </div>
+
+          <div class="group" id="choice-group">
+            <div class="group-title">Writing</div>
+          </div>
+
+          <div class="group">
+            <div class="group-title">Length</div>
+            <div class="field">
+              <span class="field-label">Compared with the original part</span>
+              <div class="ratio">
+                <label>at least <input class="input" type="number" step="0.05" id="min-ratio"> ×</label>
+                <label>at most <input class="input" type="number" step="0.05" id="max-ratio"> ×</label>
+              </div>
+              <div class="help" id="ratio-help"></div>
+            </div>
+          </div>
+
+          <div class="group">
+            <div class="group-title">Extra</div>
+            <div class="field">
+              <label for="extra">Extra instructions</label>
+              <textarea class="textarea" id="extra" data-field="extra_instructions" placeholder="Anything else for the agent, e.g. &quot;Avoid the word 'paradigm'.&quot;"></textarea>
+              <div class="help">Followed unless it conflicts with the rules about keeping data and graphics unchanged.</div>
+            </div>
+          </div>
+
+          <div class="error-box" id="config-error"></div>
+          <div class="toolbar">
+            <button type="button" class="primary" id="save">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+              Save
+            </button>
+            <button type="button" class="ghost" id="reload">Revert</button>
+            <div class="spacer"></div>
+            <span class="state" id="config-state">Saved</span>
+            <kbd id="shortcut">⌘S</kbd>
+          </div>
+        </form>
+      </div>
+    </section>
+  </div>
+</main>
+
+<div class="toasts" id="toasts"></div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const STAGES = ["parse", "split", "rewrite", "headlines", "metadata", "export"];
+const ICONS = {
+  copy: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>',
+  check: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>',
+  x: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>',
+  clock: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
+  chevron: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>',
+  spinner: '<span class="spinner"></span>',
+};
+
+function el(tag, props = {}, ...children) {
+  const node = Object.assign(document.createElement(tag), props);
+  node.append(...children);
+  return node;
+}
+
+function toast(text, kind = "") {
+  const node = el("div", { className: `toast ${kind}` });
+  node.innerHTML = kind === "bad" ? ICONS.x : ICONS.check;
+  node.append(text);
+  $("toasts").append(node);
+  setTimeout(() => node.remove(), 2600);
+}
+
+async function errorText(response) {
+  try { const body = await response.json(); return body.detail || response.statusText; }
+  catch { return response.statusText; }
+}
+
+/* ---------- Copy buttons ---------- */
+document.querySelectorAll("[data-copy-target]").forEach((button) => {
+  button.innerHTML = ICONS.copy;
+  button.onclick = async () => {
+    try {
+      await navigator.clipboard.writeText($(button.dataset.copyTarget).textContent);
+      button.innerHTML = ICONS.check;
+      setTimeout(() => (button.innerHTML = ICONS.copy), 1200);
+    } catch { toast("Could not copy", "bad"); }
+  };
+});
+
+/* ---------- Server ---------- */
+function setStatus(kind, text) {
+  const pill = $("top-status");
+  pill.className = `pill ${kind}`;
+  pill.lastElementChild.textContent = text;
+}
+
+async function loadServer() {
+  try {
+    const info = await (await fetch("/api/server")).json();
+    const main = info.urls[0] || `http://<this computer's IP>:${info.port}`;
+    $("url").textContent = main;
+    $("emulator").textContent = info.emulator_url;
+    $("build").textContent = `./gradlew installDebug -PparserServerUrl=${main}`;
+    $("other-row").hidden = info.urls.length < 2;
+    $("other").textContent = info.urls.slice(1).join(", ");
+
+    if (!info.urls.length) {
+      setStatus("warn", "No network");
+      $("reach-text").textContent = "This computer isn't on a network, so a phone can't reach it. The emulator still works.";
+    } else if (info.reachable) {
+      setStatus("ok", `Server online · port ${info.port}`);
+      $("reach-text").textContent = "The server is running and ready for the app.";
+    } else {
+      setStatus("bad", "Server offline");
+      $("reach-text").textContent = "The server isn't answering. Restart python -m admin.";
+    }
+  } catch {
+    setStatus("bad", "Admin offline");
+    $("reach-text").textContent = "Lost connection to the admin server.";
+  }
+}
+
+/* ---------- Uploads ---------- */
+async function upload(files) {
+  const pdfs = files.filter((file) => file.name.toLowerCase().endsWith(".pdf"));
+  if (pdfs.length < files.length) toast("Only PDF files can be added", "bad");
+
+  for (const file of pdfs) {
+    const response = await fetch(`/api/jobs?name=${encodeURIComponent(file.name)}`, {
+      method: "POST", headers: { "Content-Type": "application/pdf" }, body: file,
+    });
+    if (response.ok) toast(`Added ${file.name}`);
+    else toast(`${file.name}: ${await errorText(response)}`, "bad");
+  }
+  loadJobs();
+}
+
+const drop = $("drop");
+$("file").onchange = (e) => { upload([...e.target.files]); e.target.value = ""; };
+drop.ondragover = (e) => { e.preventDefault(); drop.classList.add("over"); };
+drop.ondragleave = () => drop.classList.remove("over");
+drop.ondrop = (e) => { e.preventDefault(); drop.classList.remove("over"); upload([...e.dataTransfer.files]); };
+
+/* ---------- Jobs ---------- */
+const jobNodes = new Map();
+
+function progress(job) {
+  // Reads the stage from the pipeline's log lines, such as "[rewrite 3/6] ..." or "[split] done".
+  let current = -1, part = null;
+  for (const line of job.log) {
+    const match = line.match(/^\[(\w+)(?: (\d+)\/(\d+))?\]/);
+    if (!match || !STAGES.includes(match[1])) continue;
+    const index = STAGES.indexOf(match[1]);
+    if (index >= current) { current = index; part = match[2] ? `${match[2]}/${match[3]}` : null; }
+  }
+  if (job.status === "done") return { current: STAGES.length, part: null };
+  if (job.status === "running" && current < 0) current = 0;
+  return { current, part };
+}
+
+function duration(job) {
+  if (!job.started) return "";
+  const seconds = Math.max(0, Math.round((job.finished || Date.now() / 1000) - job.started));
+  const m = Math.floor(seconds / 60), s = seconds % 60;
+  return m >= 60 ? `${Math.floor(m / 60)}h ${m % 60}m` : `${m}:${String(s).padStart(2, "0")}`;
+}
+
+function describe(job, { current, part }) {
+  const stage = STAGES[current];
+  if (job.status === "queued") return "Waiting in the queue";
+  if (job.status === "done") return "Done · exported to the app";
+  if (job.status === "failed") return stage ? `Failed during ${stage}` : "Failed";
+  if (stage === "rewrite" && part) return `Rewriting part ${part}`;
+  return stage ? `${stage[0].toUpperCase()}${stage.slice(1)}…` : "Starting…";
+}
+
+function buildJob() {
+  const node = el("div", { className: "job" });
+  node.innerHTML = `
+    <div class="job-top">
+      <div class="job-icon"></div>
+      <div class="job-name"><b></b><span></span></div>
+      <span class="job-time"></span>
+    </div>
+    <div class="steps">${STAGES.map((s) => `<div class="step"><div class="bar"></div><small>${s}</small></div>`).join("")}</div>
+    <button class="ghost log-toggle">${ICONS.chevron}<span>Show log</span></button>
+    <pre class="log mono"></pre>`;
+  const log = node.querySelector(".log");
+  node.querySelector(".log-toggle").onclick = () => {
+    node.classList.toggle("open");
+    node.querySelector(".log-toggle span").textContent = node.classList.contains("open") ? "Hide log" : "Show log";
+    log.scrollTop = log.scrollHeight;
+  };
+  return node;
+}
+
+function renderJob(node, job) {
+  const state = progress(job);
+  const icon = node.querySelector(".job-icon");
+  icon.className = `job-icon ${job.status}`;
+  const iconHtml = { queued: ICONS.clock, running: ICONS.spinner, done: ICONS.check, failed: ICONS.x }[job.status];
+  if (icon.dataset.status !== job.status) { icon.innerHTML = iconHtml; icon.dataset.status = job.status; }
+
+  node.querySelector(".job-name b").textContent = job.name;
+  node.querySelector(".job-name span").textContent = describe(job, state);
+  node.querySelector(".job-time").textContent = duration(job);
+
+  node.querySelectorAll(".step").forEach((step, index) => {
+    let cls = "step";
+    if (index < state.current) cls += " done";
+    else if (index === state.current) cls += job.status === "failed" ? " failed" : " current";
+    step.className = cls;
+  });
+
+  const log = node.querySelector(".log");
+  const text = job.log.join("\n") || "No output yet.";
+  if (log.textContent !== text) {
+    const atBottom = log.scrollHeight - log.scrollTop - log.clientHeight < 30;
+    log.textContent = text;
+    if (atBottom) log.scrollTop = log.scrollHeight;
+  }
+}
+
+async function loadJobs() {
+  let jobs;
+  try { jobs = await (await fetch("/api/jobs")).json(); } catch { return; }
+
+  const container = $("jobs");
+  if (!jobs.length) return;
+  container.querySelector(".empty")?.remove();
+
+  jobs.forEach((job, index) => {
+    let node = jobNodes.get(job.id);
+    if (!node) { node = buildJob(); jobNodes.set(job.id, node); }
+    renderJob(node, job);
+    if (container.children[index] !== node) container.insertBefore(node, container.children[index] || null);
+  });
+
+  const running = jobs.filter((j) => j.status === "running").length;
+  const queued = jobs.filter((j) => j.status === "queued").length;
+  const parts = [`${jobs.length} total`];
+  if (running) parts.push(`${running} running`);
+  if (queued) parts.push(`${queued} queued`);
+  $("job-count").textContent = parts.join(" · ");
+}
+
+/* ---------- Config ---------- */
+// Settings with a fixed set of values are buttons; free-text settings are text fields.
+// The meanings follow article-skills/skills/rewrite-part/SKILL.md.
+const CHOICE_FIELDS = [
+  ["style", "Style"],
+  ["explanation", "Explanation"],
+  ["metaphors", "Metaphors"],
+  ["sentences", "Sentences"],
+  ["model", "Model"],
+];
+const MODELS = ["sonnet", "opus", "haiku"];
+const MEANINGS = {
+  model: {
+    sonnet: "Good quality at a reasonable speed. The default.",
+    opus: "The most capable model, but slower and more expensive.",
+    haiku: "The fastest and cheapest. Good for testing the pipeline.",
+  },
+  style: {
+    formal: "Academic but clear. No contractions, no addressing the reader, no jokes.",
+    neutral: "Plain, factual popular science, like a good encyclopedia.",
+    friendly: "Warm and conversational. May address the reader as \"you\", but stays precise.",
+    catchy: "Lively, like a good science magazine. Vivid, but never hype or clickbait.",
+  },
+  explanation: {
+    none: "Adds nothing. Only makes the existing text clearer.",
+    light: "A few words for the most important terms, the first time they appear.",
+    moderate: "A sentence per important term, and a plain summary after dense passages.",
+    thorough: "Explains every term and each equation, with the background needed. Consider raising the length limit.",
+  },
+  metaphors: {
+    none: "No metaphors or analogies.",
+    occasional: "One or two per part, only where an idea is hard to picture.",
+    frequent: "Wherever they help understanding, never misleading ones.",
+  },
+  sentences: {
+    as_original: "Keeps the original sentences; only untangles confusing ones.",
+    shorter: "Splits long sentences, prefers the active voice, one idea per sentence.",
+    short_and_simple: "Short sentences, everyday words, very few clauses.",
+  },
+};
+
+let choices = {};
+let saved = null;
+let draft = null;
+
+const clone = (value) => JSON.parse(JSON.stringify(value));
+const isDirty = () => draft && JSON.stringify(draft) !== JSON.stringify(saved);
+
+function buildChoices() {
+  const options = { ...choices, model: MODELS };
+  const group = $("choice-group");
+  group.querySelectorAll(".field").forEach((node) => node.remove());
+
+  for (const [key, label] of CHOICE_FIELDS) {
+    const chips = el("div", { className: "chips", role: "radiogroup" });
+    for (const value of options[key] || []) {
+      const chip = el("button", { type: "button", className: "chip", textContent: value.replaceAll("_", " ") });
+      chip.dataset.choice = key;
+      chip.dataset.value = value;
+      chip.setAttribute("role", "radio");
+      chip.onclick = () => { draft[key] = value; render(); };
+      chips.append(chip);
+    }
+    const help = el("div", { className: "help" });
+    help.dataset.help = key;
+    group.append(el("div", { className: "field" }, el("span", { className: "field-label", textContent: label }), chips, help));
+  }
+}
+
+function render() {
+  if (!draft) return;
+
+  document.querySelectorAll("[data-choice]").forEach((chip) => {
+    const on = draft[chip.dataset.choice] === chip.dataset.value;
+    chip.classList.toggle("active", on);
+    chip.setAttribute("aria-checked", on);
+  });
+  document.querySelectorAll("[data-help]").forEach((help) => {
+    help.textContent = MEANINGS[help.dataset.help]?.[draft[help.dataset.help]] || "";
+  });
+  // Don't overwrite the field being typed in, or the caret jumps.
+  document.querySelectorAll("[data-field]").forEach((input) => {
+    if (document.activeElement !== input) input.value = draft[input.dataset.field] ?? "";
+  });
+  for (const [id, key] of [["min-ratio", "min_ratio"], ["max-ratio", "max_ratio"]]) {
+    if (document.activeElement !== $(id)) $(id).value = draft.length?.[key] ?? "";
+  }
+  updateState();
+}
+
+function updateState() {
+  const state = $("config-state");
+  if (isDirty()) { state.className = "state dirty"; state.textContent = "● Unsaved changes"; }
+  else { state.className = "state"; state.textContent = "Saved"; }
+}
+
+document.querySelectorAll("[data-field]").forEach((input) => {
+  input.addEventListener("input", () => { draft[input.dataset.field] = input.value; updateState(); });
+});
+for (const [id, key] of [["min-ratio", "min_ratio"], ["max-ratio", "max_ratio"]]) {
+  $(id).addEventListener("input", () => {
+    draft.length = { ...draft.length, [key]: $(id).value === "" ? null : Number($(id).value) };
+    updateState();
+  });
+}
+
+async function loadConfig() {
+  const config = await (await fetch("/api/config")).json();
+  const box = $("config-error");
+  choices = config.choices;
+  const [low, high] = config.length_limits;
+  $("min-ratio").min = low; $("min-ratio").max = 1;
+  $("max-ratio").min = 1; $("max-ratio").max = high;
+  $("ratio-help").textContent =
+    `"At least" between ${low} and 1, "at most" between 1 and ${high}. Parts under 60 words aren't checked.`;
+
+  try {
+    saved = JSON.parse(config.text);
+    box.classList.remove("show");
+  } catch {
+    box.textContent = `${config.path} isn't valid JSON. Fix the file by hand, then press Revert.`;
+    box.classList.add("show");
+    return;
+  }
+  draft = clone(saved);
+  buildChoices();
+  render();
+}
+
+async function saveConfig() {
+  if (!draft) return;
+  const response = await fetch("/api/config", { method: "PUT", body: JSON.stringify(draft) });
+  const box = $("config-error");
+  if (response.ok) {
+    saved = JSON.parse((await response.json()).text);
+    draft = clone(saved);
+    box.classList.remove("show");
+    toast("Rewrite style saved");
+    render();
+  } else {
+    box.textContent = await errorText(response);
+    box.classList.add("show");
+  }
+}
+
+document.addEventListener("keydown", (e) => {
+  if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "s") { e.preventDefault(); saveConfig(); }
+});
+window.addEventListener("beforeunload", (e) => { if (isDirty()) e.preventDefault(); });
+
+$("save").onclick = saveConfig;
+$("reload").onclick = () => { $("config-error").classList.remove("show"); loadConfig(); };
+if (!/Mac|iPhone|iPad/.test(navigator.platform)) $("shortcut").textContent = "Ctrl+S";
+
+/* ---------- Start ---------- */
+loadServer();
+loadJobs();
+loadConfig();
+setInterval(loadJobs, 2000);
+setInterval(loadServer, 10000);
+</script>
+</body>
+</html>

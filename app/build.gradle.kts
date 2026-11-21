@@ -21,7 +21,7 @@ android {
 
         // 10.0.2.2 is how the emulator reaches the computer it runs on. See backend/README.md.
         val parserServerUrl = providers.gradleProperty("parserServerUrl")
-            .getOrElse("http://10.0.2.2:8000")
+            .getOrElse("http://10.0.2.2:8005")
         buildConfigField("String", "PARSER_SERVER_URL", "\"$parserServerUrl\"")
     }
 

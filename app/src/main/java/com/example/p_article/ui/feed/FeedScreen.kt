@@ -31,6 +31,7 @@ fun FeedScreen(
     onArticleClick: (String, Int) -> Unit,
     onSettingsClick: () -> Unit,
     onAddArticlesClick: () -> Unit,
+    onHistoryClick: () -> Unit,
     viewModel: FeedViewModel = viewModel(),
 ) {
     val panels by viewModel.panels.collectAsStateWithLifecycle()
@@ -53,7 +54,12 @@ fun FeedScreen(
                         onAddArticlesClick()
                     }
                 },
-                onItemClick = { scope.launch { drawerState.close() } },
+                onHistoryClick = {
+                    scope.launch {
+                        drawerState.close()
+                        onHistoryClick()
+                    }
+                },
             )
         },
     ) {

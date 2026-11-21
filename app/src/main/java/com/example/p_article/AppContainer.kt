@@ -18,6 +18,7 @@ class AppContainer(context: Context) {
             particleDao = db.particleDao(),
             panelDao = db.panelDao(),
             statusDao = db.statusDao(),
+            articleDao = db.articleDao(),
             imageStore = imageStore,
         )
 }

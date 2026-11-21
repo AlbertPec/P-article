@@ -1,11 +1,13 @@
 package com.example.p_article.data.repository
 
+import com.example.p_article.data.HistoryItem
 import com.example.p_article.data.Panel
 import com.example.p_article.data.Particle
 import com.example.p_article.data.ReadingStatus
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.update
 
 class FakeParticleRepository : ParticleRepository {
@@ -69,6 +71,22 @@ class FakeParticleRepository : ParticleRepository {
         }
     }
 
+    override fun observeHistory(): Flow<List<HistoryItem>> {
+        return flowOf(
+            listOf(
+                HistoryItem(
+                    articleId = "uuid-0",
+                    title = "Sample Article Title",
+                    authors = listOf("Author One", "Author Two"),
+                    topic = "Technology",
+                    particleCount = 3,
+                    readCount = 2,
+                    lastReadAt = System.currentTimeMillis(),
+                )
+            )
+        )
+    }
+
     override suspend fun nextParticle(current: Particle): Particle? {
         val currentList = particlesFlow.value
         val currentIndex = currentList.indexOfFirst { it.articleId == current.articleId && it.partNo == current.partNo }
@@ -80,6 +98,10 @@ class FakeParticleRepository : ParticleRepository {
 
     override suspend fun setStatus(articleId: String, partNo: Int, status: ReadingStatus) {
         statuses.update { it + (key(articleId, partNo) to status) }
+    }
+
+    override suspend fun getResumePartNo(articleId: String): Int {
+        return 1
     }
 
     override suspend fun sync(): Result<Unit> {

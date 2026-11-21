@@ -22,14 +22,14 @@ import com.example.p_article.R
 fun FeedDrawerContent(
     onSettingsClick: () -> Unit,
     onAddArticlesClick: () -> Unit,
-    onItemClick: () -> Unit,
+    onHistoryClick: () -> Unit,
 ) {
     ModalDrawerSheet {
         Text("Menu", Modifier.padding(16.dp), style = MaterialTheme.typography.titleLarge)
         listOf(
             Triple("Settings", Icons.Outlined.Settings, onSettingsClick),
             Triple("Add articles", Icons.Outlined.AddCircle, onAddArticlesClick),
-            Triple("History", ImageVector.vectorResource(R.drawable.ic_history), onItemClick),   // TODO: real action later
+            Triple("History", ImageVector.vectorResource(R.drawable.ic_history), onHistoryClick),
         ).forEachIndexed { index, (label, icon, onClick) ->
             if (index > 0) {
                 HorizontalDivider(Modifier.padding(NavigationDrawerItemDefaults.ItemPadding))

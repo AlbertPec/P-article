@@ -1,6 +1,6 @@
 """Runs the article pipeline from the command line. From backend/:
 
-    .venv/bin/python -m pipeline samples/test-article.pdf
+    .venv/bin/python -m pipeline path/to/article.pdf
     .venv/bin/python -m pipeline --folder output/test-article
     .venv/bin/python -m pipeline --folder output/test-article --from headlines
 """

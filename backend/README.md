@@ -1,29 +1,37 @@
-# P-article parser server
+# P-article backend
 
-Receives PDFs from the app, parses them with `pdf_to_md_v2.py`, and saves each result in `output/<article name>/`:
+The backend has two parts:
 
-- `article.md`: the parsed article
-- `images/`: images and tables extracted from it
-- a copy of the original PDF
+- **The server** (`p_article_server/`) serves processed articles to the app through a read-only REST API. The API and the data layout are described in `../high-level-architecture-v2.md`.
+- **The pipeline** (`pipeline/`) turns a PDF into parts, rewritten parts and headlines, using the parser `pdf_to_md.py` and local Claude Code agents. See "Pipeline" below.
 
 ## Setup
 
-Requires Python 3.13.
+Requires Python 3.14.
 
 ```sh
 cd backend
-python3.13 -m venv .venv
-.venv/bin/pip install -r requirements.txt
+python3.14 -m venv .venv
+.venv/bin/pip install -e ".[pipeline,dev]"
 ```
 
-## Run
+`pipeline` installs the parser's dependencies and `dev` the test tools. The server alone needs neither.
+
+## Run the server
 
 ```sh
 cd backend
-.venv/bin/uvicorn server:app --host 127.0.0.1 --port 8000
+.venv/bin/p-article-server --data-dir data
 ```
 
-The server has no authentication, so it only listens on this computer. Keep the `127.0.0.1` host.
+`data/` must contain `articles/`, laid out as in `../high-level-architecture-v2.md`. The server has no authentication, so by default it only listens on this computer. Use `--host 0.0.0.0` only on a network you trust, and `--port` to change the port from 8000.
+
+## Tests
+
+```sh
+cd backend
+.venv/bin/pytest
+```
 
 ## Connect the app
 
@@ -36,25 +44,15 @@ adb reverse tcp:8000 tcp:8000
 ./gradlew installDebug -PparserServerUrl=http://localhost:8000
 ```
 
-## Test PDF
-
-To put the sample PDF in the Downloads folder of an emulator or connected phone:
-
-```sh
-adb push backend/samples/test-article.pdf /sdcard/Download/
-```
-
-If it doesn't appear in the file picker, restart the device or open its Files app.
-
 ## Pipeline
 
-The pipeline parses a PDF the same way the server does, then runs a series of LLM stages on it. Each stage runs in a fresh local Claude Code agent that only has its own skill and the article folder. For now it runs from the command line only; the server doesn't use it yet.
+The pipeline parses a PDF with `pdf_to_md.py`, then runs a series of LLM stages on it. Each stage runs in a fresh local Claude Code agent that only has its own skill and the article folder. It runs from the command line, and writes to its own working folders in `output/`, not to the server's `data/`.
 
 It needs the `claude` CLI installed and logged in. If `claude` isn't on your `PATH`, set `CLAUDE_BIN` to its location.
 
 ```sh
 cd backend
-.venv/bin/python -m pipeline samples/test-article.pdf                       # parse, then every stage
+.venv/bin/python -m pipeline path/to/test-article.pdf                       # parse, then every stage
 .venv/bin/python -m pipeline --folder output/test-article                   # rerun every stage, without parsing
 .venv/bin/python -m pipeline --folder output/test-article --from headlines  # rerun from one stage onwards
 ```
@@ -67,7 +65,7 @@ Everything goes in the article folder `output/<name>/`:
 
 | Path | Written by |
 |------|------------|
-| `article.md`, `images/` | parse (`pdf_to_md_v2.py`) |
+| `article.md`, `images/` | parse (`pdf_to_md.py`) |
 | `split-outline.md` | split: the article's numbered blocks with their reading times, for the agent |
 | `split-plan.json` | split: the agent's plan, saying which blocks go into each part and which are deleted |
 | `parts/part_1.md` … | split: the article cut along the plan, see "How split runs" below |

@@ -127,12 +127,14 @@ Write JSON in exactly this shape:
 
 ```json
 {
+  "title": "Estimation of ship routes considering weather and constraints",
   "authors": ["Wei Du", "Yanjun Li"],
   "affiliations": ["College of Power and Energy Engineering, Harbin Engineering University, Harbin, 150001, Heilongjiang, China"],
   "topic": "Choosing fuel-efficient ship routes under weather and engine-power constraints"
 }
 ```
 
+- **`title`:** the article's title, word for word as the article gives it, as plain text. Leave out Markdown (`#`, `**`), HTML, footnote markers and a final period. Keep its capitalization. If the title runs over several lines, join them with single spaces. The title also stays as the heading at the start of part 1.
 - **`authors`:** every author's full name, in the article's order, as written in the article. Leave out superscripts, footnote markers (`a`, `*`, `**`) and HTML such as `<sup>`.
 - **`affiliations`:** every distinct affiliation, in the order they first appear, written out in full, without the letter or number marker.
 - **`topic`:** one short plain-English phrase, about 5 to 15 words, saying what the article is about. Write it for a general reader rather than copying the title.
@@ -194,4 +196,4 @@ Write JSON in exactly this shape:
 - [ ] Each part takes 4-5 minutes without its deleted blocks, or has a rule-2 reason not to.
 - [ ] Each part starts and ends with text where possible.
 - [ ] The parts are contiguous, from `B1` to the back matter or the last block.
-- [ ] The metadata has every author and affiliation, and a topic phrase.
+- [ ] The metadata has the title, every author and affiliation, and a topic phrase.

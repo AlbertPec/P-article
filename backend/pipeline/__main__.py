@@ -3,6 +3,7 @@
     .venv/bin/python -m pipeline path/to/article.pdf
     .venv/bin/python -m pipeline --folder output/test-article
     .venv/bin/python -m pipeline --folder output/test-article --from headlines
+    .venv/bin/python -m pipeline path/to/article.pdf --data-dir /path/to/data
 """
 
 import argparse
@@ -11,7 +12,9 @@ import shutil
 import sys
 from pathlib import Path
 
+from . import export
 from .agent import AgentError, AgentRun, run_agent, skill_prompt
+from .metadata import article_id
 from .parse import ParseError, parse_pdf
 from .stages import STAGES, Stage, StageError, numbered_parts, stage_model
 
@@ -56,11 +59,13 @@ def run_stage(stage: Stage, article: Path) -> tuple[int, float, float]:
         runs.append(run)
         print(f"    {run.seconds:.0f} s, {run.turns} turns: {run.result.strip()[:120]}", flush=True)
 
-    if stage.per_part:
+    if stage.skill is None:
+        print(f"[{stage.name}] Python only, no agent", flush=True)
+    elif stage.per_part:
         parts = numbered_parts(article / "parts")
 
         for number, part in enumerate(parts, 1):
-            prompt = skill_prompt(stage.skill, stage.args.format(part=part.name, article_id=article.name))
+            prompt = skill_prompt(stage.skill, stage.args.format(part=part.name, article_id=article_id(article)))
             print(f"[{stage.name} {number}/{len(parts)}] {prompt}", flush=True)
             send(f"{stage.name}-{part.stem}", prompt)
 
@@ -76,7 +81,7 @@ def run_stage(stage: Stage, article: Path) -> tuple[int, float, float]:
                     )
                     stage.check_part(article, part.name)
     else:
-        prompt = skill_prompt(stage.skill, stage.args.format(article_id=article.name))
+        prompt = skill_prompt(stage.skill, stage.args.format(article_id=article_id(article)))
         print(f"[{stage.name}] {prompt}", flush=True)
         send(stage.name, prompt)
 
@@ -100,6 +105,12 @@ def main() -> int:
     source.add_argument("pdf", nargs="?", type=Path, help="the PDF to parse and process")
     source.add_argument("--folder", type=Path, help="an article folder in output/ that was already parsed")
     parser.add_argument("--from", dest="start", choices=stage_names, help="the first stage to run (needs --folder)")
+    parser.add_argument(
+        "--data-dir",
+        type=Path,
+        default=export.DEFAULT_DATA_DIR,
+        help="the server's data folder, which export writes to (default: backend/data)",
+    )
     args = parser.parse_args()
 
     if args.start and not args.folder:
@@ -120,6 +131,14 @@ def main() -> int:
             return 1
 
         print(f"[parse] saved {article}", flush=True)
+
+    export.data_dir = args.data_dir.resolve()
+
+    try:
+        print(f"[id] {article_id(article)}", flush=True)
+    except StageError as exc:
+        print(f"\n[id] failed: {exc}", file=sys.stderr)
+        return 1
 
     stages = STAGES[stage_names.index(args.start):] if args.start else STAGES
     summary = []

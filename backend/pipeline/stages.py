@@ -11,7 +11,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 
-from . import rewrite, split
+from . import export, metadata, rewrite, split
 from .errors import StageError
 from .parts import numbered_parts
 
@@ -28,9 +28,10 @@ IMAGE_LINK = re.compile(r"!\[[^\]]*\]\(([^)\s]+)")
 @dataclass(frozen=True)
 class Stage:
     name: str
-    # The skill in article-skills/ that the stage's agent runs.
-    skill: str
-    # Passed after the skill name. {article_id} is replaced with the folder name, and for
+    # The skill in article-skills/ that the stage's agent runs. None means the stage has no
+    # agent and only runs its Python: prepare, finish and check.
+    skill: str | None
+    # Passed after the skill name. {article_id} is replaced with the article's UUID, and for
     # per-part stages {part} with the part's file name.
     args: str
     # Deleted before the stage runs, so a rerun never passes its check on stale files.
@@ -64,7 +65,9 @@ def stage_model(stage: Stage, article: Path) -> str:
     return stage.model or DEFAULT_MODEL
 
 
-def check_metadata(article: Path) -> None:
+def check_metadata(article: Path, keys: tuple[str, ...] = metadata.SPLIT_KEYS) -> dict:
+    """Checks metadata.json has exactly these keys, and checks the ones split writes. Returns it."""
+
     path = article / split.METADATA
 
     try:
@@ -74,8 +77,9 @@ def check_metadata(article: Path) -> None:
     except json.JSONDecodeError as exc:
         raise StageError(f"{split.METADATA} is not valid JSON: {exc}") from None
 
-    if not isinstance(data, dict) or set(data) != {"authors", "affiliations", "topic"}:
-        raise StageError(f'{split.METADATA} must have exactly the keys "authors", "affiliations" and "topic"')
+    if not isinstance(data, dict) or set(data) != set(keys):
+        quoted = [f'"{key}"' for key in keys]
+        raise StageError(f"{split.METADATA} must have exactly the keys {', '.join(quoted[:-1])} and {quoted[-1]}")
 
     for key in ("authors", "affiliations"):
         values = data[key]
@@ -86,8 +90,25 @@ def check_metadata(article: Path) -> None:
     if not data["authors"]:
         raise StageError(f'{split.METADATA} "authors" is empty')
 
-    if not isinstance(data["topic"], str) or not data["topic"].strip():
-        raise StageError(f'{split.METADATA} "topic" must be a non-empty string')
+    for key in ("title", "topic"):
+        if not isinstance(data[key], str) or not data[key].strip():
+            raise StageError(f'{split.METADATA} "{key}" must be a non-empty string')
+
+    return data
+
+
+def check_final_metadata(article: Path) -> None:
+    data = check_metadata(article, metadata.FINAL_KEYS)
+
+    if not metadata.is_uuid4(data[metadata.ID]):
+        raise StageError(f'{split.METADATA} "{metadata.ID}" must be a UUIDv4, got {data[metadata.ID]!r}')
+
+    expected = metadata.particle_count(article)
+    count = data[metadata.PARTICLE_COUNT]
+
+    # bool is an int in Python, but not a count.
+    if type(count) is not int or count != expected:
+        raise StageError(f'{split.METADATA} "{metadata.PARTICLE_COUNT}" is {count!r}, expected {expected}')
 
 
 def check_abstract(article: Path) -> None:
@@ -127,8 +148,10 @@ def check_headlines(article: Path) -> None:
     if not isinstance(data, dict) or set(data) != {"article_id", "headers"}:
         raise StageError('headers.json must have exactly the keys "article_id" and "headers"')
 
-    if data["article_id"] != article.name:
-        raise StageError(f'headers.json has article_id "{data["article_id"]}", expected "{article.name}"')
+    article_id = metadata.article_id(article)
+
+    if data["article_id"] != article_id:
+        raise StageError(f'headers.json has article_id "{data["article_id"]}", expected "{article_id}"')
 
     headers = data["headers"]
 
@@ -232,5 +255,26 @@ STAGES = (
         check=check_headlines,
         model="sonnet",
         timeout=5 * 60,
+    ),
+    # No agent: Python adds the article's id (a UUIDv4) and particle count to metadata.json.
+    # It has no outputs to clear, because it completes the file that split wrote.
+    Stage(
+        name="metadata",
+        skill=None,
+        args="",
+        outputs=(),
+        check=check_final_metadata,
+        finish=metadata.complete,
+    ),
+    # No agent: Python copies the article into data/articles/<article id>/, the server's layout,
+    # then reads it back the way the server does. It replaces an earlier export itself, because
+    # its output is outside the article folder.
+    Stage(
+        name="export",
+        skill=None,
+        args="",
+        outputs=(),
+        check=export.check,
+        finish=export.export,
     ),
 )

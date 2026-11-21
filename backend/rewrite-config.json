@@ -1,0 +1,14 @@
+{
+  "model": "sonnet",
+  "audience": "curious adults with no background in the field",
+  "language": "same as the original",
+  "style": "friendly",
+  "explanation": "moderate",
+  "metaphors": "occasional",
+  "sentences": "shorter",
+  "length": {
+    "min_ratio": 0.85,
+    "max_ratio": 1.3
+  },
+  "extra_instructions": ""
+}

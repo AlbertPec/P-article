@@ -27,9 +27,15 @@ class MainActivity : ComponentActivity() {
             val settingsViewModel: SettingsViewModel = viewModel()
             val darkModeSetting by settingsViewModel.darkMode.collectAsStateWithLifecycle()
             val darkMode = darkModeSetting ?: isSystemInDarkTheme()
+            val serverUrl by settingsViewModel.serverUrl.collectAsStateWithLifecycle()
 
             P_articleTheme(darkTheme = darkMode) {   // name depends on your generated theme
-                AppNavHost(darkMode = darkMode, onDarkModeChange = settingsViewModel::setDarkMode)
+                AppNavHost(
+                    darkMode = darkMode,
+                    onDarkModeChange = settingsViewModel::setDarkMode,
+                    serverUrl = serverUrl,
+                    onServerUrlChange = settingsViewModel::setServerUrl,
+                )
             }
         }
     }

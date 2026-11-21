@@ -2,7 +2,6 @@ package com.example.p_article.ui.feed
 
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.AddCircle
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -22,14 +21,12 @@ import com.example.p_article.R
 @Composable
 fun FeedDrawerContent(
     onSettingsClick: () -> Unit,
-    onAddArticlesClick: () -> Unit,
     onItemClick: () -> Unit,
 ) {
     ModalDrawerSheet {
         Text(stringResource(R.string.menu), Modifier.padding(16.dp), style = MaterialTheme.typography.titleLarge)
         listOf(
             Triple(stringResource(R.string.settings), Icons.Outlined.Settings, onSettingsClick),
-            Triple(stringResource(R.string.add_articles), Icons.Outlined.AddCircle, onAddArticlesClick),
             Triple(stringResource(R.string.history), ImageVector.vectorResource(R.drawable.ic_history), onItemClick),   // TODO: real action later
         ).forEachIndexed { index, (label, icon, onClick) ->
             if (index > 0) {

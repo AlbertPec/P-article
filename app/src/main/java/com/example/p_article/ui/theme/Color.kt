@@ -77,3 +77,5 @@ val ArticleSwipeKeep = Color(0xFFECCE2A)
 val ArticleSwipeLabel = Color(0xFFFFFFFF)
 val ArticleDeleteButton = Color(0x8C000000)
 val ArticleDeleteIcon = Color(0xFFFFFFFF)
+// Article images are mostly black on transparent, so they get a light frame in both modes
+val ArticleImageBackground = Color(0xFFFFFFFF)

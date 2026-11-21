@@ -43,9 +43,12 @@ def as_text(output: str | bytes | None) -> str:
     return output or ""
 
 
+def skill_prompt(skill: str, args: str) -> str:
+    return f"/{PLUGIN_NAME}:{skill} {args}".strip()
+
+
 def run_agent(
-    skill: str,
-    args: str,
+    prompt: str,
     cwd: Path,
     *,
     model: str,
@@ -53,9 +56,7 @@ def run_agent(
     timeout: int,
     log_path: Path,
 ) -> AgentRun:
-    """Runs /article:<skill> <args> in a new agent whose working folder is cwd."""
-
-    prompt = f"/{PLUGIN_NAME}:{skill} {args}".strip()
+    """Sends prompt to a new agent whose working folder is cwd. The agent is forgotten afterwards."""
 
     command = [
         claude_bin(),

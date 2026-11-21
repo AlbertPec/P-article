@@ -11,14 +11,18 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 
-DEFAULT_MODEL = os.environ.get("PIPELINE_MODEL", "haiku")
+from . import rewrite, split
+from .errors import StageError
+from .parts import numbered_parts
 
-PART_FILE = re.compile(r"part_(\d+)\.md")
+# PIPELINE_MODEL overrides the model of every stage, including those that set their own.
+MODEL_OVERRIDE = os.environ.get("PIPELINE_MODEL")
+DEFAULT_MODEL = "haiku"
+
+# The skill asks for at most 60 characters; this is the hard limit.
+HEADLINE_MAX_CHARS = 70
+
 IMAGE_LINK = re.compile(r"!\[[^\]]*\]\(([^)\s]+)")
-
-
-class StageError(Exception):
-    pass
 
 
 @dataclass(frozen=True)
@@ -26,51 +30,74 @@ class Stage:
     name: str
     # The skill in article-skills/ that the stage's agent runs.
     skill: str
-    # Passed after the skill name. {article_id} is the folder name; {part} is the part's file name.
+    # Passed after the skill name. {article_id} is replaced with the folder name, and for
+    # per-part stages {part} with the part's file name.
     args: str
     # Deleted before the stage runs, so a rerun never passes its check on stale files.
     outputs: tuple[str, ...]
     # Runs after the stage's agents and raises StageError if their output is unusable.
     check: Callable[[Path], None]
-    # When set, one agent runs for each part_<n>.md in this folder, instead of one for the stage.
-    parts_from: str | None = None
+    # When true, a fresh agent runs for each part in parts/, in order, and check_part runs after
+    # each one. A part that fails its check gets one more fresh agent.
+    per_part: bool = False
+    check_part: Callable[[Path, str], None] | None = None
+    # Python that runs before the stage's agents, for example to prepare their input.
+    prepare: Callable[[Path], None] | None = None
+    # Python that runs after the agents and before check. It returns lines to print.
+    finish: Callable[[Path], list[str]] | None = None
     tools: tuple[str, ...] = ("Read", "Write", "Glob", "Grep", "Skill")
-    # None means DEFAULT_MODEL, which PIPELINE_MODEL can override.
+    # None means DEFAULT_MODEL. A stage whose model is set in a config file uses model_setting
+    # instead, which reads it from the article folder.
     model: str | None = None
-    # Seconds, per agent.
+    model_setting: Callable[[Path], str] | None = None
+    # Seconds, for each agent.
     timeout: int = 10 * 60
 
 
-def numbered_parts(folder: Path) -> list[Path]:
-    """Returns part_1.md … part_N.md in order, or raises if any are missing, extra or empty."""
+def stage_model(stage: Stage, article: Path) -> str:
+    if MODEL_OVERRIDE:
+        return MODEL_OVERRIDE
 
-    if not folder.is_dir():
-        raise StageError(f"{folder.name}/ was not created")
+    if stage.model_setting:
+        return stage.model_setting(article)
 
-    parts = {}
+    return stage.model or DEFAULT_MODEL
 
-    for path in folder.iterdir():
-        if path.name.startswith("."):
-            continue
 
-        match = PART_FILE.fullmatch(path.name)
+def check_metadata(article: Path) -> None:
+    path = article / split.METADATA
 
-        if not match:
-            raise StageError(f"unexpected file {folder.name}/{path.name}")
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except FileNotFoundError:
+        raise StageError(f"{split.METADATA} was not created") from None
+    except json.JSONDecodeError as exc:
+        raise StageError(f"{split.METADATA} is not valid JSON: {exc}") from None
 
-        parts[int(match[1])] = path
+    if not isinstance(data, dict) or set(data) != {"authors", "affiliations", "topic"}:
+        raise StageError(f'{split.METADATA} must have exactly the keys "authors", "affiliations" and "topic"')
 
-    if not parts:
-        raise StageError(f"{folder.name}/ is empty")
+    for key in ("authors", "affiliations"):
+        values = data[key]
 
-    if sorted(parts) != list(range(1, len(parts) + 1)):
-        raise StageError(f"{folder.name}/ is not numbered part_1.md to part_{len(parts)}.md")
+        if not isinstance(values, list) or not all(isinstance(value, str) and value.strip() for value in values):
+            raise StageError(f'{split.METADATA} "{key}" must be a list of non-empty strings')
 
-    for path in parts.values():
-        if not path.read_text(encoding="utf-8").strip():
-            raise StageError(f"{folder.name}/{path.name} is empty")
+    if not data["authors"]:
+        raise StageError(f'{split.METADATA} "authors" is empty')
 
-    return [parts[number] for number in sorted(parts)]
+    if not isinstance(data["topic"], str) or not data["topic"].strip():
+        raise StageError(f'{split.METADATA} "topic" must be a non-empty string')
+
+
+def check_abstract(article: Path) -> None:
+    path = article / split.ABSTRACT
+
+    if not path.is_file():
+        raise StageError(f"{split.ABSTRACT} was not created")
+
+    if not path.read_text(encoding="utf-8").strip():
+        raise StageError(f"{split.ABSTRACT} is empty")
 
 
 def check_split(article: Path) -> None:
@@ -79,13 +106,11 @@ def check_split(article: Path) -> None:
             if not re.match(r"[a-z]+://", link) and not (article / link).is_file():
                 raise StageError(f"parts/{part.name} links to {link}, which doesn't exist")
 
-
-def check_rewrite(article: Path) -> None:
-    parts = [path.name for path in numbered_parts(article / "parts")]
-    rewritten = [path.name for path in numbered_parts(article / "rewritten")]
-
-    if rewritten != parts:
-        raise StageError(f"rewritten/ has {len(rewritten)} parts, but parts/ has {len(parts)}")
+    # Every block of the article must be in exactly one place (a part, dropped.md or the
+    # back matter), copied byte for byte, with every kept graphic link as the parser wrote it.
+    split.verify(article)
+    check_metadata(article)
+    check_abstract(article)
 
 
 def check_headlines(article: Path) -> None:
@@ -115,9 +140,16 @@ def check_headlines(article: Path) -> None:
         extra = sorted(set(headers) - expected)
         raise StageError(f"headers.json parts don't match rewritten/ (missing: {missing}, extra: {extra})")
 
+    abstract = article / split.ABSTRACT
+    abstract_numbers = rewrite.numbers(abstract.read_text(encoding="utf-8")) if abstract.is_file() else set()
+    seen: dict[str, str] = {}
+
     for part_id, titles in headers.items():
         if not isinstance(titles, list) or len(titles) != 3:
             raise StageError(f"headers.json {part_id} must have exactly 3 titles")
+
+        # A headline may only use numbers that its own part or the abstract gives.
+        allowed = abstract_numbers | rewrite.numbers((article / "rewritten" / f"{part_id}.md").read_text(encoding="utf-8"))
 
         for title in titles:
             if (
@@ -128,30 +160,77 @@ def check_headlines(article: Path) -> None:
             ):
                 raise StageError(f'headers.json {part_id} has an entry that isn\'t {{"title": "<text>"}}')
 
+            text = title["title"].strip()
+
+            if len(text) > HEADLINE_MAX_CHARS:
+                raise StageError(
+                    f"headers.json {part_id}: {text!r} has {len(text)} characters, more than {HEADLINE_MAX_CHARS}"
+                )
+
+            invented = sorted(rewrite.numbers(text) - allowed)
+
+            if invented:
+                raise StageError(f"headers.json {part_id}: {text!r} uses numbers that aren't in the part: {invented}")
+
+            key = " ".join(text.casefold().rstrip(".!").split())
+
+            if key in seen:
+                raise StageError(f"headers.json repeats the headline {text!r} ({seen[key]} and {part_id})")
+
+            seen[key] = part_id
+
 
 STAGES = (
+    # The agent decides where parts end and which blocks to delete, and writes the metadata.
+    # Python measures reading time before it runs and cuts the text after, so the parts are
+    # always exact copies of the blocks they keep.
+    # Sonnet: choosing where a thought ends needs real reading comprehension, which Haiku got
+    # wrong on the mocks, while the output is a short JSON plan, so Opus would add cost for little.
     Stage(
         name="split",
         skill="split-article",
-        args="article.md parts",
-        outputs=("parts",),
+        args=f"{split.ARTICLE} {split.OUTLINE} {split.PLAN} {split.METADATA} {split.ABSTRACT}",
+        outputs=(
+            "parts",
+            split.OUTLINE,
+            split.PLAN,
+            split.BACK_MATTER,
+            split.DROPPED,
+            split.METADATA,
+            split.ABSTRACT,
+        ),
         check=check_split,
+        prepare=split.write_outline,
+        finish=split.apply_plan,
+        model="sonnet",
     ),
+    # A fresh agent per part keeps the context small. Each one reads the previous rewritten part
+    # and a short shared notes file (terms, metaphors, tone), so the article keeps one style.
+    # The style and the model come from rewrite-config.json. Python checks every part: graphics,
+    # equations and captions unchanged, no number lost or added, and the length within range.
     Stage(
         name="rewrite",
         skill="rewrite-part",
-        args="parts/{part} rewritten/{part}",
-        outputs=("rewritten",),
-        check=check_rewrite,
-        parts_from="parts",
-        timeout=5 * 60,
+        args=f"{rewrite.PARTS} {rewrite.REWRITTEN} {{part}} {rewrite.NOTES} {split.ABSTRACT} {rewrite.SETTINGS}",
+        outputs=(rewrite.REWRITTEN, rewrite.NOTES, rewrite.SETTINGS),
+        check=rewrite.check,
+        per_part=True,
+        check_part=rewrite.check_part,
+        prepare=rewrite.prepare,
+        finish=rewrite.report,
+        tools=("Read", "Write", "Edit", "Glob", "Grep", "Skill"),
+        model_setting=rewrite.configured_model,
     ),
+    # One agent for the whole article, so the headlines can differ from part to part.
+    # Sonnet: catchy but accurate needs both wit and reading comprehension, and the output is
+    # short, so it costs little more than Haiku would.
     Stage(
         name="headlines",
         skill="write-headlines",
-        args="rewritten headers.json {article_id}",
+        args=f"rewritten headers.json {{article_id}} {split.ABSTRACT}",
         outputs=("headers.json",),
         check=check_headlines,
+        model="sonnet",
         timeout=5 * 60,
     ),
 )

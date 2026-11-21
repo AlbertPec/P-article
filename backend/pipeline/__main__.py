@@ -11,17 +11,17 @@ import shutil
 import sys
 from pathlib import Path
 
-from .agent import AgentError, run_agent
+from .agent import AgentError, AgentRun, run_agent, skill_prompt
 from .parse import ParseError, parse_pdf
-from .stages import DEFAULT_MODEL, STAGES, Stage, StageError, numbered_parts
+from .stages import STAGES, Stage, StageError, numbered_parts, stage_model
 
 
 def clear_outputs(stage: Stage, article: Path) -> None:
     logs = article / "logs"
 
     paths = [article / output for output in stage.outputs]
-    paths += logs.glob(f"{stage.name}.json")
-    paths += logs.glob(f"{stage.name}-part_*.json")
+    paths.append(logs / f"{stage.name}.json")
+    paths += logs.glob(f"{stage.name}-*.json")
 
     for path in paths:
         if path.is_dir():
@@ -31,43 +31,62 @@ def clear_outputs(stage: Stage, article: Path) -> None:
 
 
 def run_stage(stage: Stage, article: Path) -> tuple[int, float, float]:
-    """Runs a stage's agents one after another, then checks their output.
+    """Runs a stage's agent and checks its output.
 
-    Returns how many agents ran, their total time and their total cost.
+    Returns how many calls it took, their total time and their total cost.
     """
 
     clear_outputs(stage, article)
 
-    if stage.parts_from:
-        jobs = [(f"{stage.name}-{part.stem}", part.name) for part in numbered_parts(article / stage.parts_from)]
-    else:
-        jobs = [(stage.name, None)]
+    if stage.prepare:
+        stage.prepare(article)
 
-    seconds = 0.0
-    cost = 0.0
+    runs: list[AgentRun] = []
+    model = stage_model(stage, article)
 
-    for number, (label, part) in enumerate(jobs, 1):
-        args = stage.args.format(part=part, article_id=article.name)
-        progress = f" {number}/{len(jobs)}" if part else ""
-        print(f"[{stage.name}{progress}] /article:{stage.skill} {args}", flush=True)
-
+    def send(label: str, prompt: str) -> None:
         run = run_agent(
-            stage.skill,
-            args,
+            prompt,
             article,
-            model=stage.model or DEFAULT_MODEL,
+            model=model,
             tools=stage.tools,
             timeout=stage.timeout,
             log_path=article / "logs" / f"{label}.json",
         )
-
-        seconds += run.seconds
-        cost += run.cost_usd
+        runs.append(run)
         print(f"    {run.seconds:.0f} s, {run.turns} turns: {run.result.strip()[:120]}", flush=True)
+
+    if stage.per_part:
+        parts = numbered_parts(article / "parts")
+
+        for number, part in enumerate(parts, 1):
+            prompt = skill_prompt(stage.skill, stage.args.format(part=part.name, article_id=article.name))
+            print(f"[{stage.name} {number}/{len(parts)}] {prompt}", flush=True)
+            send(f"{stage.name}-{part.stem}", prompt)
+
+            if stage.check_part:
+                try:
+                    stage.check_part(article, part.name)
+                except StageError as exc:
+                    print(f"    check failed: {exc}. Trying once more.", flush=True)
+                    send(
+                        f"{stage.name}-{part.stem}-retry",
+                        f"{prompt}\n\nA previous attempt at this part failed its check: {exc}. "
+                        "Fix this and write the part again.",
+                    )
+                    stage.check_part(article, part.name)
+    else:
+        prompt = skill_prompt(stage.skill, stage.args.format(article_id=article.name))
+        print(f"[{stage.name}] {prompt}", flush=True)
+        send(stage.name, prompt)
+
+    if stage.finish:
+        for line in stage.finish(article):
+            print(f"    {line}", flush=True)
 
     stage.check(article)
 
-    return len(jobs), seconds, cost
+    return len(runs), sum(run.seconds for run in runs), sum(run.cost_usd for run in runs)
 
 
 def main() -> int:
@@ -107,7 +126,7 @@ def main() -> int:
 
     for stage in stages:
         try:
-            agents, seconds, cost = run_stage(stage, article)
+            calls, seconds, cost = run_stage(stage, article)
         except (AgentError, StageError) as exc:
             print(f"\n[{stage.name}] failed: {exc}", file=sys.stderr)
             print(
@@ -116,13 +135,13 @@ def main() -> int:
             )
             return 1
 
-        summary.append((stage.name, agents, seconds, cost))
+        summary.append((stage.name, calls, seconds, cost))
         print(f"[{stage.name}] done", flush=True)
 
     print(f"\nDone: {article}")
 
-    for name, agents, seconds, cost in summary:
-        print(f"  {name:<10} {agents:>3} agent(s)  {seconds:>6.0f} s  ${cost:.4f}")
+    for name, calls, seconds, cost in summary:
+        print(f"  {name:<10} {calls:>3} call(s)  {seconds:>6.0f} s  ${cost:.4f}")
 
     return 0
 

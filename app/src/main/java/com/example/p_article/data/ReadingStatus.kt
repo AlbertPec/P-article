@@ -1,3 +1,3 @@
 package com.example.p_article.data
 
-enum class ReadingStatus { Keep, Finished, Hidden }
+enum class ReadingStatus {New, Keep, Finished, Hidden }

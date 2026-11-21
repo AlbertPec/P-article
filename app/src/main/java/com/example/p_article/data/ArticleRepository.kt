@@ -6,26 +6,28 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 
 interface ArticleRepository {
-    val decisions: StateFlow<Map<Int, ReadingStatus>>
+    val decisions: StateFlow<Map<String, ReadingStatus>>
     suspend fun getArticles(): List<Article>
-    suspend fun getArticle(id: Int): Article?
-    fun markArticle(id: Int, decision: ReadingStatus)
+    suspend fun getArticle(id: String): Article?
+    fun markArticle(id: String, decision: ReadingStatus)
 }
 
 object FakeArticleRepository : ArticleRepository {
     private val articles = List(20) { i ->
         Article(
-            id = i,
+            id = "uuid-$i",
             title = "Article title #$i",
-            imageUrl = "https://picsum.photos/seed/$i/600/400",
-            content = "Lorem ipsum dolor sit amet... ".repeat(60),
+            authors = listOf("Author $i"),
+            affiliations = listOf("University $i"),
+            topic = "Topic $i",
+            particleCount = 3,
         )
     }
     override suspend fun getArticles() = articles
-    override suspend fun getArticle(id: Int) = articles.find { it.id == id }
-    private val _decisions = MutableStateFlow<Map<Int, ReadingStatus>>(emptyMap())
+    override suspend fun getArticle(id: String) = articles.find { it.id == id }
+    private val _decisions = MutableStateFlow<Map<String, ReadingStatus>>(emptyMap())
     override val decisions = _decisions.asStateFlow()
-    override fun markArticle(id: Int, decision: ReadingStatus) {
+    override fun markArticle(id: String, decision: ReadingStatus) {
         _decisions.update { it + (id to decision) }
     }
 }

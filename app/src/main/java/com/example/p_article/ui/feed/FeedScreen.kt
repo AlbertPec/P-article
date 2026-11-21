@@ -30,12 +30,12 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FeedScreen(
-    onArticleClick: (Int) -> Unit,
+    onArticleClick: (String, Int) -> Unit,
     onSettingsClick: () -> Unit,
     onAddArticlesClick: () -> Unit,
     viewModel: FeedViewModel = viewModel(),
 ) {
-    val articles by viewModel.articles.collectAsStateWithLifecycle()
+    val panels by viewModel.panels.collectAsStateWithLifecycle()
     val drawerState = rememberDrawerState(DrawerValue.Closed)
     val scope = rememberCoroutineScope()
 
@@ -76,8 +76,8 @@ fun FeedScreen(
                 verticalArrangement = Arrangement.spacedBy(12.dp),
                 modifier = Modifier.padding(padding),
             ) {
-                items(articles, key = { it.id }) { article ->
-                    ArticlePanel(article, onClick = { onArticleClick(article.id) })
+                items(panels, key = { "${it.articleId}_${it.partNo}" }) { panel ->
+                    ArticlePanel(panel, onClick = { onArticleClick(panel.articleId, panel.partNo) })
                 }
             }
         }

@@ -15,22 +15,26 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
-import com.example.p_article.data.Article
+import com.example.p_article.data.Panel
 import com.example.p_article.ui.theme.ArticleTitleOnImage
 import com.example.p_article.ui.theme.ArticleTitleScrim
 
 @Composable
-fun ArticlePanel(article: Article, onClick: () -> Unit, modifier: Modifier = Modifier) {
+fun ArticlePanel(panel: Panel, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    val model = panel.imagePath.ifEmpty {
+        "https://picsum.photos/seed/${panel.articleId}_${panel.partNo}/600/400"
+    }
+
     Card(modifier = modifier.fillMaxWidth().clickable(onClick = onClick)) {
         Box {
             AsyncImage(
-                model = article.imageUrl,
-                contentDescription = article.title,
+                model = model,
+                contentDescription = panel.header,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxWidth().aspectRatio(16f / 9f),
             )
             Text(
-                text = article.title,
+                text = panel.header,
                 style = MaterialTheme.typography.titleMedium,
                 color = ArticleTitleOnImage,
                 modifier = Modifier

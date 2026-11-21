@@ -17,7 +17,7 @@ import com.example.p_article.ui.feed.FeedScreen
 import com.example.p_article.ui.settings.SettingsScreen
 
 private const val FEED = "feed"
-private const val ARTICLE = "article/{articleId}"
+private const val ARTICLE = "article/{articleId}/{partNo}"
 private const val SETTINGS = "settings"
 private const val ADD_ARTICLES = "add_articles"
 
@@ -30,14 +30,17 @@ fun AppNavHost(
     NavHost(navController, startDestination = FEED) {
         composable(FEED) {
             FeedScreen(
-                onArticleClick = { id -> navController.navigate("article/$id") },
+                onArticleClick = { articleId, partNo -> navController.navigate("article/$articleId/$partNo") },
                 onSettingsClick = { navController.navigate(SETTINGS) { launchSingleTop = true } },
                 onAddArticlesClick = { navController.navigate(ADD_ARTICLES) { launchSingleTop = true } },
             )
         }
         composable(
             route = ARTICLE,
-            arguments = listOf(navArgument("articleId") { type = NavType.IntType }),
+            arguments = listOf(
+                navArgument("articleId") { type = NavType.StringType },
+                navArgument("partNo") { type = NavType.IntType },
+            ),
             popExitTransition = { ExitTransition.None },
         ) {
             ArticleScreen(onFinished = { navController.popBackStack() })

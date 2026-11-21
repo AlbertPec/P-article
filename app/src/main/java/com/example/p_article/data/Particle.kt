@@ -6,4 +6,7 @@ data class Particle(
     val articleTitle: String,
     val content: String,            // Markdown
     val status: ReadingStatus = ReadingStatus.New,
+    val images: Map<String, String> = emptyMap(),
 )
+
+val MARKDOWN_IMAGE = Regex("""!\[([^\]]*)\]\(([^)\s]+)\)""")

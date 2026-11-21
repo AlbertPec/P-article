@@ -1,21 +1,23 @@
 package com.example.p_article.ui.article
 
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.SavedStateHandle
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.p_article.PArticleApplication
 import com.example.p_article.data.Particle
 import com.example.p_article.data.ReadingStatus
-import com.example.p_article.data.repository.FakeParticleRepository
 import com.example.p_article.data.repository.ParticleRepository
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
-class ArticleViewModel @JvmOverloads constructor(
+class ArticleViewModel(
+    application: Application,
     savedStateHandle: SavedStateHandle,
-    private val repo: ParticleRepository = FakeParticleRepository(),
-) : ViewModel() {
+) : AndroidViewModel(application) {
+    private val repo: ParticleRepository = (application as PArticleApplication).container.particleRepository
     private val articleId: String = checkNotNull(savedStateHandle["articleId"]) { "articleId is required" }
     private val partNo: Int = checkNotNull(savedStateHandle["partNo"]) { "partNo is required" }
 

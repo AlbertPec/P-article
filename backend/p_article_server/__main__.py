@@ -19,7 +19,7 @@ def main() -> None:
         default="127.0.0.1",
         help="address to listen on; use 0.0.0.0 to reach the server from the local network (default: 127.0.0.1)",
     )
-    parser.add_argument("--port", type=int, default=8000, help="port to listen on (default: 8000)")
+    parser.add_argument("--port", type=int, default=8005, help="port to listen on (default: 8005)")
     args = parser.parse_args()
 
     if not (args.data_dir / "articles").is_dir():

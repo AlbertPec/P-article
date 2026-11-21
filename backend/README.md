@@ -24,7 +24,24 @@ cd backend
 .venv/bin/p-article-server --data-dir data
 ```
 
-`data/` must contain `articles/`, laid out as in `../high-level-architecture-v2.md`. The pipeline's export stage writes it (see "How export runs"). The server has no authentication, so by default it only listens on this computer. Use `--host 0.0.0.0` only on a network you trust, and `--port` to change the port from 8000.
+`data/` must contain `articles/`, laid out as in `../high-level-architecture-v2.md`. The pipeline's export stage writes it (see "How export runs"). The server has no authentication, so by default it only listens on this computer. Use `--host 0.0.0.0` only on a network you trust, and `--port` to change the port from 8005.
+
+## Admin page
+
+For day-to-day use, one command starts both the server and a small admin page:
+
+```sh
+cd backend
+.venv/bin/python -m admin
+```
+
+Then open http://127.0.0.1:8001. The page has three cards:
+
+- **Connect the app:** the address to type into the app, such as `http://192.168.1.20:8005`, with a copy button. The badge at the top shows whether the server answers. The card also shows the emulator address and the `-PparserServerUrl=...` build flag.
+- **Add articles:** drop or choose PDFs. Each one runs through the whole pipeline (`python -m pipeline <pdf>`), one at a time. A progress bar shows the stage it's in, read from the pipeline's `[stage]` log lines, and the full log opens below it. Finished articles are exported to `data/` and the app sees them right away, without a restart. A failed job's log ends with the command that reruns it from the failed stage.
+- **Rewrite style:** a form for `rewrite-config.json` (see "The style settings" below). Settings with a fixed set of values (style, explanation, metaphors, sentences, model) are buttons, each with a one-line meaning; audience, language and extra instructions are text fields; the length limits are number fields. Saving runs the same check as the pipeline. A change applies to jobs that start after you save. The buttons come from `CHOICES` in `pipeline/rewrite.py`, and the meanings from `MEANINGS` in `admin/static/index.html`, so a new value needs a meaning there too.
+
+The API server listens on `0.0.0.0:8005`, so a phone on the same network can reach it. The admin page listens only on `127.0.0.1:8001`, because it can upload files and run the pipeline and has no authentication. Flags: `--data-dir`, `--port` (admin page), `--api-host` and `--api-port`. Uploads wait in `uploads/` and are deleted once their job ends, because parse keeps its own copy in `output/`. The job list lives in memory, so it's empty after a restart.
 
 ## Tests
 
@@ -35,13 +52,13 @@ cd backend
 
 ## Connect the app
 
-**Emulator:** nothing to set up. The app uses `http://10.0.2.2:8000`, which is how an emulator reaches this computer.
+**Emulator:** nothing to set up. The app uses `http://10.0.2.2:8005`, which is how an emulator reaches this computer.
 
 **Phone over USB:** forward the port and build the app with the local address:
 
 ```sh
-adb reverse tcp:8000 tcp:8000
-./gradlew installDebug -PparserServerUrl=http://localhost:8000
+adb reverse tcp:8005 tcp:8005
+./gradlew installDebug -PparserServerUrl=http://localhost:8005
 ```
 
 ## Pipeline

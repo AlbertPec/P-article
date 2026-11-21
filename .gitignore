@@ -80,3 +80,4 @@ __pycache__/
 
 */data/
 */*.egg-info/*
+backend/uploads/

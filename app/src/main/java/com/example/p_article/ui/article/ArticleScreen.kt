@@ -56,7 +56,7 @@ import kotlin.math.roundToInt
 
 @Composable
 fun ArticleScreen(onFinished: () -> Unit, viewModel: ArticleViewModel = viewModel()) {
-    val article by viewModel.article.collectAsStateWithLifecycle()
+    val article by viewModel.particle.collectAsStateWithLifecycle()
     val scope = rememberCoroutineScope()
     val offsetX = remember { Animatable(0f) }
     val trashProgress = remember { Animatable(0f) }
@@ -141,8 +141,8 @@ fun ArticleScreen(onFinished: () -> Unit, viewModel: ArticleViewModel = viewMode
                 Column(Modifier.verticalScroll(rememberScrollState())) {
                     Box(Modifier.fillMaxWidth()) {
                         AsyncImage(
-                            model = a.imageUrl,
-                            contentDescription = a.title,
+                            model = "https://picsum.photos/seed/${a.articleId}_${a.partNo}/600/400",
+                            contentDescription = a.articleTitle,
                             contentScale = ContentScale.Crop,
                             modifier = Modifier.fillMaxWidth().aspectRatio(16f / 9f),
                         )
@@ -168,7 +168,7 @@ fun ArticleScreen(onFinished: () -> Unit, viewModel: ArticleViewModel = viewMode
                             Icon(Icons.Default.Delete, contentDescription = "Don't show this article")
                         }
                     }
-                    Text(a.title, Modifier.padding(16.dp), style = MaterialTheme.typography.headlineSmall)
+                    Text(a.articleTitle, Modifier.padding(16.dp), style = MaterialTheme.typography.headlineSmall)
                     Text(a.content, Modifier.padding(horizontal = 16.dp))
                 }
             }

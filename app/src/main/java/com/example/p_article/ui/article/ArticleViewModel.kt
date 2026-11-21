@@ -3,24 +3,28 @@ package com.example.p_article.ui.article
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.p_article.data.Article
-import com.example.p_article.data.ArticleRepository
-import com.example.p_article.data.FakeArticleRepository
+import com.example.p_article.data.Particle
 import com.example.p_article.data.ReadingStatus
-import kotlinx.coroutines.flow.MutableStateFlow
+import com.example.p_article.data.repository.FakeParticleRepository
+import com.example.p_article.data.repository.ParticleRepository
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 class ArticleViewModel @JvmOverloads constructor(
     savedStateHandle: SavedStateHandle,
-    private val repo: ArticleRepository = FakeArticleRepository,
+    private val repo: ParticleRepository = FakeParticleRepository(),
 ) : ViewModel() {
-    private val articleId: Int = checkNotNull(savedStateHandle["articleId"])
-    private val _article = MutableStateFlow<Article?>(null)
-    val article: StateFlow<Article?> = _article.asStateFlow()
+    private val articleId: String = checkNotNull(savedStateHandle["articleId"]) { "articleId is required" }
+    private val partNo: Int = checkNotNull(savedStateHandle["partNo"]) { "partNo is required" }
 
-    init { viewModelScope.launch { _article.value = repo.getArticle(articleId) } }
+    val particle: StateFlow<Particle?> = repo.particle(articleId, partNo)
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
-    fun mark(decision: ReadingStatus) = repo.markArticle(articleId, decision)
+    fun mark(decision: ReadingStatus) {
+        viewModelScope.launch {
+            repo.setStatus(articleId, partNo, decision)
+        }
+    }
 }

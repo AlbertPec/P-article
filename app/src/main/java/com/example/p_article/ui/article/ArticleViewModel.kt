@@ -20,6 +20,8 @@ class ArticleViewModel(
     private val repo: ParticleRepository = (application as PArticleApplication).container.particleRepository
     private val articleId: String = checkNotNull(savedStateHandle["articleId"]) { "articleId is required" }
     private val partNo: Int = checkNotNull(savedStateHandle["partNo"]) { "partNo is required" }
+    val panelImagePath: String = savedStateHandle.get<String>("imagePath") ?: ""
+    val panelHeader: String = savedStateHandle.get<String>("header") ?: ""
 
     val particle: StateFlow<Particle?> = repo.particle(articleId, partNo)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)

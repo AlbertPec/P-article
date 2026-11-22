@@ -1,5 +1,6 @@
 package com.example.p_article.ui.navigation
 
+import android.net.Uri
 import androidx.compose.animation.ExitTransition
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
@@ -18,7 +19,7 @@ import com.example.p_article.ui.history.HistoryViewModel
 import com.example.p_article.ui.settings.SettingsScreen
 
 private const val FEED = "feed"
-private const val ARTICLE = "article/{articleId}/{partNo}"
+private const val ARTICLE = "article/{articleId}/{partNo}?imagePath={imagePath}&header={header}"
 private const val SETTINGS = "settings"
 private const val HISTORY = "history"
 
@@ -33,7 +34,11 @@ fun AppNavHost(
     NavHost(navController, startDestination = FEED) {
         composable(FEED) {
             FeedScreen(
-                onArticleClick = { articleId, partNo -> navController.navigate("article/$articleId/$partNo") },
+                onArticleClick = { panel ->
+                    val pathArg = Uri.encode(panel.imagePath)
+                    val headerArg = Uri.encode(panel.header)
+                    navController.navigate("article/${panel.articleId}/${panel.partNo}?imagePath=$pathArg&header=$headerArg")
+                },
                 onSettingsClick = { navController.navigate(SETTINGS) { launchSingleTop = true } },
                 onHistoryClick = { navController.navigate(HISTORY) { launchSingleTop = true } },
             )
@@ -43,6 +48,8 @@ fun AppNavHost(
             arguments = listOf(
                 navArgument("articleId") { type = NavType.StringType },
                 navArgument("partNo") { type = NavType.IntType },
+                navArgument("imagePath") { type = NavType.StringType; nullable = true; defaultValue = "" },
+                navArgument("header") { type = NavType.StringType; nullable = true; defaultValue = "" },
             ),
             popExitTransition = { ExitTransition.None },
         ) {

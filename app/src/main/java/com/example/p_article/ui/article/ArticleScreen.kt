@@ -1,9 +1,11 @@
 package com.example.p_article.ui.article
 
+import android.graphics.BitmapFactory
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutLinearInEasing
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.draggable
@@ -43,16 +45,26 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
+import com.mikepenz.markdown.m3.Markdown
+import com.mikepenz.markdown.model.rememberMarkdownState
+import com.example.p_article.data.MARKDOWN_IMAGE
+import com.example.p_article.data.Particle
 import com.example.p_article.data.ReadingStatus
 import com.example.p_article.ui.theme.ArticleDeleteButton
 import com.example.p_article.ui.theme.ArticleDeleteIcon
+import com.example.p_article.ui.theme.ArticleImageBackground
 import com.example.p_article.ui.theme.ArticleSwipeBackdrop
 import com.example.p_article.ui.theme.ArticleSwipeFinished
 import com.example.p_article.ui.theme.ArticleSwipeKeep
 import com.example.p_article.ui.theme.ArticleSwipeLabel
+import androidx.compose.ui.res.stringResource
+import com.example.p_article.R
 import kotlinx.coroutines.launch
+import java.io.File
 import kotlin.math.abs
 import kotlin.math.roundToInt
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.TextButton
 
 @Composable
 fun ArticleScreen(onFinished: () -> Unit, viewModel: ArticleViewModel = viewModel()) {
@@ -61,6 +73,7 @@ fun ArticleScreen(onFinished: () -> Unit, viewModel: ArticleViewModel = viewMode
     val offsetX = remember { Animatable(0f) }
     val trashProgress = remember { Animatable(0f) }
     var isLeaving by remember { mutableStateOf(false) }
+    var showConfirm by remember { mutableStateOf(false) }
 
     val screenWidth = LocalWindowInfo.current.containerSize.width.toFloat()
     val threshold = screenWidth * 0.3f
@@ -102,7 +115,7 @@ fun ArticleScreen(onFinished: () -> Unit, viewModel: ArticleViewModel = viewMode
             contentAlignment = if (offsetX.value >= 0) Alignment.CenterStart else Alignment.CenterEnd,
         ) {
             Text(
-                text = if (offsetX.value >= 0) "Finished" else "Keep",
+                text = if (offsetX.value >= 0) stringResource(R.string.article_finished) else stringResource(R.string.article_keep),
                 color = ArticleSwipeLabel.copy(alpha = currentAlpha),
                 style = MaterialTheme.typography.headlineLarge,
                 modifier = Modifier.padding(32.dp),
@@ -147,7 +160,7 @@ fun ArticleScreen(onFinished: () -> Unit, viewModel: ArticleViewModel = viewMode
                             modifier = Modifier.fillMaxWidth().aspectRatio(16f / 9f),
                         )
                         FilledIconButton(
-                            onClick = ::trash,
+                            onClick = { showConfirm = true },
                             enabled = !isLeaving,
                             colors = IconButtonDefaults.filledIconButtonColors(
                                 containerColor = ArticleDeleteButton,
@@ -165,13 +178,79 @@ fun ArticleScreen(onFinished: () -> Unit, viewModel: ArticleViewModel = viewMode
                                     alpha = (1f - swipe) * (1f - trashProgress.value)
                                 },
                         ) {
-                            Icon(Icons.Default.Delete, contentDescription = "Don't show this article")
+                            Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.dont_show_this_article))
                         }
                     }
                     Text(a.articleTitle, Modifier.padding(16.dp), style = MaterialTheme.typography.headlineSmall)
-                    Text(a.content, Modifier.padding(horizontal = 16.dp))
+                    ParticleContent(a)
                 }
             }
         }
+
+        if (showConfirm) {
+            AlertDialog(
+                onDismissRequest = { showConfirm = false },
+                title = { Text(stringResource(R.string.dont_show_this_article)) },
+                text = { Text(stringResource(R.string.article_hidden_message)) },
+                confirmButton = {
+                    TextButton(onClick = {
+                        showConfirm = false
+                        trash()
+                    }) {
+                        Text(stringResource(R.string.hide))
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showConfirm = false }) {
+                        Text(stringResource(R.string.cancel))
+                    }
+                },
+            )
+        }
+    }
+}
+
+@Composable
+private fun ParticleContent(particle: Particle) {
+    var start = 0
+    MARKDOWN_IMAGE.findAll(particle.content).forEach { match ->
+        ParticleMarkdown(particle.content.substring(start, match.range.first))
+        particle.images[match.groupValues[2]]?.let { path ->
+            ParticleImage(path, match.groupValues[1].ifEmpty { null })
+        }
+        start = match.range.last + 1
+    }
+    ParticleMarkdown(particle.content.substring(start))
+}
+
+@Composable
+private fun ParticleMarkdown(text: String) {
+    if (text.isBlank()) return
+    Markdown(
+        markdownState = rememberMarkdownState(text, immediate = true),
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+    )
+}
+
+@Composable
+private fun ParticleImage(path: String, description: String?) {
+    val aspectRatio = remember(path) {
+        val options = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+        BitmapFactory.decodeFile(path, options)
+        if (options.outWidth > 0 && options.outHeight > 0) options.outWidth.toFloat() / options.outHeight else null
+    } ?: return
+
+    Surface(
+        color = ArticleImageBackground,
+        shape = MaterialTheme.shapes.medium,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+    ) {
+        AsyncImage(
+            model = File(path),
+            contentDescription = description,
+            contentScale = ContentScale.Fit,
+            modifier = Modifier.fillMaxWidth().padding(8.dp).aspectRatio(aspectRatio),
+        )
     }
 }

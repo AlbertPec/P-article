@@ -78,3 +78,7 @@ kotlin-ide/
 backend/.venv/
 backend/output/
 __pycache__/
+
+*/data/
+*/*.egg-info/*
+backend/uploads/

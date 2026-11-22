@@ -1,0 +1,32 @@
+[project]
+name = "p-article-server"
+version = "0.1.0"
+requires-python = ">=3.14"
+dependencies = [
+    "fastapi>=0.162.2",
+    "uvicorn>=0.54.0",
+]
+
+[project.optional-dependencies]
+pipeline = [
+    "pymupdf==2.1",
+    "pymupdf4llm==2.1",
+    "pymupdf-layout==2.1",
+]
+dev = [
+    "pytest",
+    "httpx",
+]
+
+[project.scripts]
+p-article-server = "p_article_server.__main__:main"
+
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["p_article_server"]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]

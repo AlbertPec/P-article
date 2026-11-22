@@ -21,7 +21,7 @@ android {
 
         // 10.0.2.2 is how the emulator reaches the computer it runs on. See backend/README.md.
         val parserServerUrl = providers.gradleProperty("parserServerUrl")
-            .getOrElse("http://10.0.2.2:8000")
+            .getOrElse("http://10.0.2.2:8005")
         buildConfigField("String", "PARSER_SERVER_URL", "\"$parserServerUrl\"")
     }
 
@@ -58,6 +58,7 @@ dependencies {
     implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.navigation.runtime.ktx)
     implementation(libs.coil.compose)
+    implementation(libs.markdown.renderer.m3)
     implementation("androidx.room:room-runtime:2.7.0")
     implementation("androidx.room:room-ktx:2.7.0")
     ksp("androidx.room:room-compiler:2.7.0")

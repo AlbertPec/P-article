@@ -1,3 +1,20 @@
 <resources>
     <string name="app_name">P_article</string>
+    <string name="article_finished">Finished</string>
+    <string name="article_keep">Keep</string>
+    <string name="dont_show_this_article">Don\'t show this article?</string>
+    <string name="article_hidden_message">This article will be hidden and won\'t appear again.</string>
+    <string name="hide">Hide</string>
+    <string name="cancel">Cancel</string>
+    <string name="back">Back</string>
+    <string name="menu">Menu</string>
+    <string name="settings">Settings</string>
+    <string name="history">History</string>
+    <string name="articles">Articles</string>
+    <string name="dark_mode">Dark mode</string>
+    <string name="server_address">Server address</string>
+    <string name="server_address_hint">For example 192.168.1.20:8000. Leave empty to use the default.</string>
+    <string name="save">Save</string>
+    <string name="error_sync_failed">Can\'t download new articles. Showing the saved ones.</string>
+    <string name="local_network_permission_sync">Allow access to local network devices to download new articles.</string>
 </resources>

@@ -1,7 +1,5 @@
 package com.example.p_article.ui.navigation
 
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.LocalActivity
 import androidx.compose.animation.ExitTransition
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
@@ -12,8 +10,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.example.p_article.ParticleApplication
-import com.example.p_article.ui.addarticles.AddArticlesScreen
+import com.example.p_article.PArticleApplication
 import com.example.p_article.ui.article.ArticleScreen
 import com.example.p_article.ui.feed.FeedScreen
 import com.example.p_article.ui.history.HistoryScreen
@@ -23,13 +20,14 @@ import com.example.p_article.ui.settings.SettingsScreen
 private const val FEED = "feed"
 private const val ARTICLE = "article/{articleId}/{partNo}"
 private const val SETTINGS = "settings"
-private const val ADD_ARTICLES = "add_articles"
 private const val HISTORY = "history"
 
 @Composable
 fun AppNavHost(
     darkMode: Boolean,
     onDarkModeChange: (Boolean) -> Unit,
+    serverUrl: String,
+    onServerUrlChange: (String) -> Unit,
     navController: NavHostController = rememberNavController(),
 ) {
     NavHost(navController, startDestination = FEED) {
@@ -37,7 +35,6 @@ fun AppNavHost(
             FeedScreen(
                 onArticleClick = { articleId, partNo -> navController.navigate("article/$articleId/$partNo") },
                 onSettingsClick = { navController.navigate(SETTINGS) { launchSingleTop = true } },
-                onAddArticlesClick = { navController.navigate(ADD_ARTICLES) { launchSingleTop = true } },
                 onHistoryClick = { navController.navigate(HISTORY) { launchSingleTop = true } },
             )
         }
@@ -51,23 +48,18 @@ fun AppNavHost(
         ) {
             ArticleScreen(onFinished = { navController.popBackStack() })
         }
-        composable(ADD_ARTICLES) {
-            AddArticlesScreen(
-                onBack = { navController.popBackStack() },
-                // Scoped to the activity so the queue keeps running after leaving this screen
-                viewModel = viewModel(viewModelStoreOwner = LocalActivity.current as ComponentActivity),
-            )
-        }
         composable(SETTINGS) {
             SettingsScreen(
                 darkMode = darkMode,
                 onDarkModeChange = onDarkModeChange,
+                serverUrl = serverUrl,
+                onServerUrlChange = onServerUrlChange,
                 onBack = { navController.popBackStack() },
             )
         }
         composable(HISTORY) {
             val context = LocalContext.current
-            val app = context.applicationContext as ParticleApplication
+            val app = context.applicationContext as PArticleApplication
             val viewModel: HistoryViewModel = viewModel(
                 factory = HistoryViewModel.factory(app.container.particleRepository)
             )

@@ -1,5 +1,8 @@
 package com.example.p_article.ui.feed
 
+import android.Manifest
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
@@ -13,16 +16,24 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.p_article.R
+import com.example.p_article.ui.needsLocalNetworkPermission
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -30,13 +41,37 @@ import kotlinx.coroutines.launch
 fun FeedScreen(
     onArticleClick: (String, Int) -> Unit,
     onSettingsClick: () -> Unit,
-    onAddArticlesClick: () -> Unit,
     onHistoryClick: () -> Unit,
     viewModel: FeedViewModel = viewModel(),
 ) {
     val panels by viewModel.panels.collectAsStateWithLifecycle()
     val drawerState = rememberDrawerState(DrawerValue.Closed)
     val scope = rememberCoroutineScope()
+    val message by viewModel.message.collectAsStateWithLifecycle()
+    val serverUrl by viewModel.serverUrl.collectAsStateWithLifecycle()
+    val snackbarHostState = remember { SnackbarHostState() }
+    val context = LocalContext.current
+    val permissionRequest = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission(),
+    ) { granted ->
+        if (granted) viewModel.sync() else viewModel.onLocalNetworkPermissionDenied()
+    }
+
+    LaunchedEffect(serverUrl) {
+        if (!viewModel.needsSync()) return@LaunchedEffect
+        if (needsLocalNetworkPermission(context)) {
+            permissionRequest.launch(Manifest.permission.ACCESS_LOCAL_NETWORK)
+        } else {
+            viewModel.sync()
+        }
+    }
+
+    LaunchedEffect(message) {
+        message?.let {
+            snackbarHostState.showSnackbar(it)
+            viewModel.messageShown()
+        }
+    }
 
     ModalNavigationDrawer(
         drawerState = drawerState,
@@ -46,12 +81,6 @@ fun FeedScreen(
                     scope.launch {
                         drawerState.close()
                         onSettingsClick()
-                    }
-                },
-                onAddArticlesClick = {
-                    scope.launch {
-                        drawerState.close()
-                        onAddArticlesClick()
                     }
                 },
                 onHistoryClick = {
@@ -64,12 +93,13 @@ fun FeedScreen(
         },
     ) {
         Scaffold(
+            snackbarHost = { SnackbarHost(snackbarHostState) },
             topBar = {
                 TopAppBar(
-                    title = { Text("Articles") },
+                    title = { Text(stringResource(R.string.articles)) },
                     navigationIcon = {
                         IconButton(onClick = { scope.launch { drawerState.open() } }) {
-                            Icon(Icons.Default.Menu, contentDescription = "Menu")
+                            Icon(Icons.Default.Menu, contentDescription = stringResource(R.string.menu))
                         }
                     },
                 )

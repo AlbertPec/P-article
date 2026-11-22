@@ -2,7 +2,6 @@ package com.example.p_article.ui.feed
 
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.AddCircle
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -14,6 +13,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.dp
 import com.example.p_article.R
@@ -21,15 +21,13 @@ import com.example.p_article.R
 @Composable
 fun FeedDrawerContent(
     onSettingsClick: () -> Unit,
-    onAddArticlesClick: () -> Unit,
     onHistoryClick: () -> Unit,
 ) {
     ModalDrawerSheet {
-        Text("Menu", Modifier.padding(16.dp), style = MaterialTheme.typography.titleLarge)
+        Text(stringResource(R.string.menu), Modifier.padding(16.dp), style = MaterialTheme.typography.titleLarge)
         listOf(
-            Triple("Settings", Icons.Outlined.Settings, onSettingsClick),
-            Triple("Add articles", Icons.Outlined.AddCircle, onAddArticlesClick),
-            Triple("History", ImageVector.vectorResource(R.drawable.ic_history), onHistoryClick),
+            Triple(stringResource(R.string.settings), Icons.Outlined.Settings, onSettingsClick),
+            Triple(stringResource(R.string.history), ImageVector.vectorResource(R.drawable.ic_history), onHistoryClick),
         ).forEachIndexed { index, (label, icon, onClick) ->
             if (index > 0) {
                 HorizontalDivider(Modifier.padding(NavigationDrawerItemDefaults.ItemPadding))

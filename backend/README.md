@@ -7,7 +7,7 @@ The backend has two parts:
 
 ## Setup
 
-Requires Python 3.14.
+Requires Python 3.14, or Python 3.13 on an Intel Mac: the PDF parser's dependencies have no Intel Mac builds for 3.14, so there `pip` installs their older 1.28.2 versions and the venv must be made with `python3.13` (`brew install python@3.13`).
 
 ```sh
 cd backend

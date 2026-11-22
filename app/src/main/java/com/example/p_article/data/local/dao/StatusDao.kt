@@ -21,4 +21,17 @@ interface StatusDao {
     // statistics: how many particles were read, and when
     @Query("SELECT updatedAtMillis FROM particle_status WHERE status = 'Read' ORDER BY updatedAtMillis")
     fun observeReadTimestamps(): Flow<List<Long>>
+
+    @Query("""
+        SELECT a.id AS articleId, a.title, a.authors, a.topic, a.particleCount,
+               COUNT(s.partNo) AS readCount, MAX(s.updatedAtMillis) AS lastReadAt
+        FROM articles a
+        JOIN particle_status s ON s.articleId = a.id AND (s.status = 'Finished' OR s.status = 'Keep' OR s.status = 'Read' OR s.status = 'READ')
+        GROUP BY a.id
+        ORDER BY lastReadAt DESC
+    """)
+    fun observeHistory(): Flow<List<HistoryRow>>
+
+    @Query("SELECT partNo FROM particle_status WHERE articleId = :articleId AND (status = 'Finished' OR status = 'Keep' OR status = 'Read' OR status = 'READ')")
+    suspend fun getReadPartNos(articleId: String): List<Int>
 }

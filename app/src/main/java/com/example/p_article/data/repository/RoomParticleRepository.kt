@@ -1,10 +1,12 @@
 package com.example.p_article.data.repository
 
 import android.util.Log
+import com.example.p_article.data.HistoryItem
 import com.example.p_article.data.MARKDOWN_IMAGE
 import com.example.p_article.data.Panel
 import com.example.p_article.data.Particle
 import com.example.p_article.data.ReadingStatus
+import com.example.p_article.data.local.dao.ArticleDao
 import com.example.p_article.data.local.dao.PanelDao
 import com.example.p_article.data.local.dao.PanelRow
 import com.example.p_article.data.local.dao.ParticleDao
@@ -25,6 +27,7 @@ class RoomParticleRepository(
     private val particleDao: ParticleDao,
     private val panelDao: PanelDao,
     private val statusDao: StatusDao,
+    private val articleDao: ArticleDao,
     private val imageStore: ImageStore,
     private val api: ParticleApi,
 ) : ParticleRepository {
@@ -41,6 +44,21 @@ class RoomParticleRepository(
 
     override fun history(): Flow<List<Panel>> =
         panelDao.observeHistory().map { rows -> rows.map { it.toPanel() } }
+
+    override fun observeHistory(): Flow<List<HistoryItem>> =
+        statusDao.observeHistory().map { rows ->
+            rows.map { row ->
+                HistoryItem(
+                    articleId = row.articleId,
+                    title = row.title,
+                    authors = if (row.authors.isEmpty()) emptyList() else row.authors.split("|||"),
+                    topic = row.topic,
+                    particleCount = row.particleCount,
+                    readCount = row.readCount,
+                    lastReadAt = row.lastReadAt,
+                )
+            }
+        }
 
     override fun particle(articleId: String, partNo: Int): Flow<Particle?> =
         particleDao.observeParticle(articleId, partNo).map { it?.toParticle() }
@@ -60,6 +78,17 @@ class RoomParticleRepository(
         if (status == ReadingStatus.Hidden) {
             imageStore.deleteParticle(articleId, partNo)
         }
+    }
+
+    override suspend fun getResumePartNo(articleId: String): Int {
+        val article = articleDao.get(articleId) ?: return 1
+        val readParts = statusDao.getReadPartNos(articleId).toSet()
+        for (i in 1..article.particleCount) {
+            if (i !in readParts) {
+                return i
+            }
+        }
+        return 1
     }
 
     override suspend fun sync(): Result<Unit> = try {

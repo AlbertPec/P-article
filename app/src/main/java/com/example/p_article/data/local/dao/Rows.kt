@@ -15,3 +15,13 @@ data class ParticleRow(
     val articleTitle: String,
     val status: String?,            // null = never touched = New
 )
+
+data class HistoryRow(
+    val articleId: String,
+    val title: String,
+    val authors: String,   // via Converters
+    val topic: String,
+    val particleCount: Int,
+    val readCount: Int,
+    val lastReadAt: Long
+)

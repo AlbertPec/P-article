@@ -21,13 +21,13 @@ import com.example.p_article.R
 @Composable
 fun FeedDrawerContent(
     onSettingsClick: () -> Unit,
-    onItemClick: () -> Unit,
+    onHistoryClick: () -> Unit,
 ) {
     ModalDrawerSheet {
         Text(stringResource(R.string.menu), Modifier.padding(16.dp), style = MaterialTheme.typography.titleLarge)
         listOf(
             Triple(stringResource(R.string.settings), Icons.Outlined.Settings, onSettingsClick),
-            Triple(stringResource(R.string.history), ImageVector.vectorResource(R.drawable.ic_history), onItemClick),   // TODO: real action later
+            Triple(stringResource(R.string.history), ImageVector.vectorResource(R.drawable.ic_history), onHistoryClick),
         ).forEachIndexed { index, (label, icon, onClick) ->
             if (index > 0) {
                 HorizontalDivider(Modifier.padding(NavigationDrawerItemDefaults.ItemPadding))

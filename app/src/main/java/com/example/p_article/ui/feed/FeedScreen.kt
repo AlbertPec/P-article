@@ -41,6 +41,7 @@ import kotlinx.coroutines.launch
 fun FeedScreen(
     onArticleClick: (String, Int) -> Unit,
     onSettingsClick: () -> Unit,
+    onHistoryClick: () -> Unit,
     viewModel: FeedViewModel = viewModel(),
 ) {
     val panels by viewModel.panels.collectAsStateWithLifecycle()
@@ -82,7 +83,12 @@ fun FeedScreen(
                         onSettingsClick()
                     }
                 },
-                onItemClick = { scope.launch { drawerState.close() } },
+                onHistoryClick = {
+                    scope.launch {
+                        drawerState.close()
+                        onHistoryClick()
+                    }
+                },
             )
         },
     ) {

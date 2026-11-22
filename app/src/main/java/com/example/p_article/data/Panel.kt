@@ -7,4 +7,5 @@ data class Panel(
     val header: String,
     val imagePath: String,          // local file
     val status: ReadingStatus = ReadingStatus.New,
+    val position: Int,
 )

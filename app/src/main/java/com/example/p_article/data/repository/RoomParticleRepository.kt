@@ -120,6 +120,9 @@ class RoomParticleRepository(
         Result.failure(e)
     }
 
+    override fun allPanels(): Flow<List<Panel>> =
+        panelDao.observeAll().map { rows -> rows.map { it.toPanel() } }
+
     private suspend fun downloadParticle(articleId: String, partNo: Int) {
         val panels = api.panels(articleId, partNo)
         val particle = api.particle(articleId, partNo)
@@ -155,6 +158,7 @@ class RoomParticleRepository(
         header = panel.header,
         imagePath = imageStore.resolvePath(panel.imagePath).absolutePath,
         status = status.toReadingStatus(),
+        position = panel.position,
     )
 }
 

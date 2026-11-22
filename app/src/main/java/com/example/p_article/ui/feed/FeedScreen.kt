@@ -111,7 +111,7 @@ fun FeedScreen(
                 verticalArrangement = Arrangement.spacedBy(12.dp),
                 modifier = Modifier.padding(padding),
             ) {
-                items(panels, key = { "${it.articleId}_${it.partNo}" }) { panel ->
+                items(panels, key = { "${it.articleId}_${it.partNo}_${it.position}" }) { panel ->
                     ArticlePanel(panel, onClick = { onArticleClick(panel) })
                 }
             }

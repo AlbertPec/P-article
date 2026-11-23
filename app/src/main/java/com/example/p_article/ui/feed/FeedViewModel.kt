@@ -26,17 +26,26 @@ class FeedViewModel(application: Application) : AndroidViewModel(application) {
     private val _message = MutableStateFlow<String?>(null)
     val message: StateFlow<String?> = _message.asStateFlow()
 
+    private val _refreshing = MutableStateFlow(false)
+    val refreshing: StateFlow<Boolean> = _refreshing.asStateFlow()
+
     private var syncedUrl: String? = null
 
     fun needsSync(): Boolean = syncedUrl != serverUrl.value
 
     fun sync() {
-        if (!needsSync()) return
+        if (needsSync()) refresh()
+    }
+
+    fun refresh() {
+        if (_refreshing.value) return
         syncedUrl = serverUrl.value
+        _refreshing.value = true
         viewModelScope.launch {
             repo.sync().onFailure {
                 _message.value = getApplication<Application>().getString(R.string.error_sync_failed)
             }
+            _refreshing.value = false
         }
     }
 

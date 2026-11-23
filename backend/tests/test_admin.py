@@ -61,6 +61,16 @@ def test_page_is_served(tmp_path, config_path):
     assert "<title>P-article Admin</title>" in response.text
 
 
+@pytest.mark.parametrize("path, media_type", [("/particle-icon.svg", "image/svg+xml"), ("/favicon.ico", "image/")])
+def test_icons_are_served(tmp_path, config_path, path, media_type):
+    client, _ = make_client(tmp_path, config_path)
+
+    response = client.get(path)
+
+    assert response.status_code == 200
+    assert response.headers["content-type"].startswith(media_type)
+
+
 def test_server_info(tmp_path, config_path):
     client, _ = make_client(tmp_path, config_path)
 

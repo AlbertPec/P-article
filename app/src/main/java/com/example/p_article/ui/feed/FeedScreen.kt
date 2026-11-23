@@ -5,6 +5,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -16,6 +17,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
@@ -49,21 +51,25 @@ fun FeedScreen(
     val scope = rememberCoroutineScope()
     val message by viewModel.message.collectAsStateWithLifecycle()
     val serverUrl by viewModel.serverUrl.collectAsStateWithLifecycle()
+    val refreshing by viewModel.refreshing.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     val context = LocalContext.current
     val permissionRequest = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission(),
     ) { granted ->
-        if (granted) viewModel.sync() else viewModel.onLocalNetworkPermissionDenied()
+        if (granted) viewModel.refresh() else viewModel.onLocalNetworkPermissionDenied()
     }
 
-    LaunchedEffect(serverUrl) {
-        if (!viewModel.needsSync()) return@LaunchedEffect
+    fun refresh() {
         if (needsLocalNetworkPermission(context)) {
             permissionRequest.launch(Manifest.permission.ACCESS_LOCAL_NETWORK)
         } else {
-            viewModel.sync()
+            viewModel.refresh()
         }
+    }
+
+    LaunchedEffect(serverUrl) {
+        if (viewModel.needsSync()) refresh()
     }
 
     LaunchedEffect(message) {
@@ -105,13 +111,19 @@ fun FeedScreen(
                 )
             },
         ) { padding ->
-            LazyColumn(
-                contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
+            PullToRefreshBox(
+                isRefreshing = refreshing,
+                onRefresh = ::refresh,
                 modifier = Modifier.padding(padding),
             ) {
-                items(panels, key = { "${it.articleId}_${it.partNo}" }) { panel ->
-                    ArticlePanel(panel, onClick = { onArticleClick(panel.articleId, panel.partNo) })
+                LazyColumn(
+                    contentPadding = PaddingValues(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    modifier = Modifier.fillMaxSize(),
+                ) {
+                    items(panels, key = { "${it.articleId}_${it.partNo}" }) { panel ->
+                        ArticlePanel(panel, onClick = { onArticleClick(panel.articleId, panel.partNo) })
+                    }
                 }
             }
         }

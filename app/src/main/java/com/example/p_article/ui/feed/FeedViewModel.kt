@@ -45,6 +45,9 @@ class FeedViewModel(application: Application) : AndroidViewModel(application) {
     private val _message = MutableStateFlow<String?>(null)
     val message: StateFlow<String?> = _message.asStateFlow()
 
+    private val _refreshing = MutableStateFlow(false)
+    val refreshing: StateFlow<Boolean> = _refreshing.asStateFlow()
+
     private var syncedUrl: String? = null
 
     init {
@@ -60,11 +63,18 @@ class FeedViewModel(application: Application) : AndroidViewModel(application) {
     private fun build(all: List<Panel>): List<FeedCard> =
         builder.build(all.toFeedParticles(), FeedContext(sessionSeed))
 
-    /** Pull-to-refresh: new order and new panel mix. */
+    /** Pull-to-refresh & Sync: fetches latest data from repo, re-randomizes seed, and updates snapshot. */
     fun refresh() {
+        if (_refreshing.value) return
+        syncedUrl = serverUrl.value
+        _refreshing.value = true
         viewModelScope.launch {
             sessionSeed = Random.nextLong()
+            repo.sync().onFailure {
+                _message.value = getApplication<Application>().getString(R.string.error_sync_failed)
+            }
             snapshot.value = build(source.first())
+            _refreshing.value = false
         }
     }
 
@@ -80,13 +90,7 @@ class FeedViewModel(application: Application) : AndroidViewModel(application) {
     fun needsSync(): Boolean = syncedUrl != serverUrl.value
 
     fun sync() {
-        if (!needsSync()) return
-        syncedUrl = serverUrl.value
-        viewModelScope.launch {
-            repo.sync().onFailure {
-                _message.value = getApplication<Application>().getString(R.string.error_sync_failed)
-            }
-        }
+        if (needsSync()) refresh()
     }
 
     fun onLocalNetworkPermissionDenied() {

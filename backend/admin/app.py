@@ -38,6 +38,14 @@ def create_admin_app(
     def index() -> FileResponse:
         return FileResponse(STATIC_DIR / "index.html")
 
+    @app.get("/favicon.ico", include_in_schema=False)
+    def favicon() -> FileResponse:
+        return FileResponse(STATIC_DIR / "favicon.ico")
+
+    @app.get("/particle-icon.svg", include_in_schema=False)
+    def icon() -> FileResponse:
+        return FileResponse(STATIC_DIR / "particle-icon.svg")
+
     @app.get("/api/server")
     def server() -> dict:
         ips = lan_ips() if api_host == "0.0.0.0" else [api_host]

@@ -34,6 +34,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.p_article.data.Panel
 import com.example.p_article.R
 import com.example.p_article.ui.needsLocalNetworkPermission
 import kotlinx.coroutines.launch
@@ -41,7 +42,7 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FeedScreen(
-    onArticleClick: (String, Int) -> Unit,
+    onArticleClick: (Panel) -> Unit,
     onSettingsClick: () -> Unit,
     onHistoryClick: () -> Unit,
     viewModel: FeedViewModel = viewModel(),
@@ -121,8 +122,8 @@ fun FeedScreen(
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                     modifier = Modifier.fillMaxSize(),
                 ) {
-                    items(panels, key = { "${it.articleId}_${it.partNo}" }) { panel ->
-                        ArticlePanel(panel, onClick = { onArticleClick(panel.articleId, panel.partNo) })
+                    items(panels, key = { "${it.articleId}_${it.partNo}_${it.position}" }) { panel ->
+                        ArticlePanel(panel, onClick = { onArticleClick(panel) })
                     }
                 }
             }

@@ -35,6 +35,7 @@ class FakeParticleRepository : ParticleRepository {
             articleTitle = "Article Title #${i / 3}",
             header = "Section Header $i",
             imagePath = "",
+            position = i,
         )
     }
 
@@ -106,5 +107,9 @@ class FakeParticleRepository : ParticleRepository {
 
     override suspend fun sync(): Result<Unit> {
         return Result.success(Unit)
+    }
+
+    override fun allPanels(): Flow<List<Panel>> {
+        return flowOf(emptyList())
     }
 }

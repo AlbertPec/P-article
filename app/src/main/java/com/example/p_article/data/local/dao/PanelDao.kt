@@ -31,4 +31,12 @@ interface PanelDao {
         ORDER BY s.updatedAtMillis DESC
     """)
     fun observeHistory(): Flow<List<PanelRow>>
+
+    @Query("""
+    SELECT p.*, a.title AS articleTitle, s.status AS status
+    FROM panels p
+    JOIN articles a ON a.id = p.articleId
+    LEFT JOIN particle_status s ON s.articleId = p.articleId AND s.partNo = p.partNo
+""")
+    fun observeAll(): Flow<List<PanelRow>>
 }

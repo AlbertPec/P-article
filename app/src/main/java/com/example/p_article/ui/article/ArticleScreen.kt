@@ -151,10 +151,17 @@ fun ArticleScreen(onFinished: () -> Unit, viewModel: ArticleViewModel = viewMode
                 ),
         ) {
             article?.let { a ->
+                val imageModel = remember(viewModel.panelImagePath, a.imagePath, a.articleId, a.partNo) {
+                    when {
+                        viewModel.panelImagePath.isNotEmpty() -> viewModel.panelImagePath
+                        a.imagePath.isNotEmpty() -> a.imagePath
+                        else -> "https://picsum.photos/seed/${a.articleId}_${a.partNo}/600/400"
+                    }
+                }
                 Column(Modifier.verticalScroll(rememberScrollState())) {
                     Box(Modifier.fillMaxWidth()) {
                         AsyncImage(
-                            model = "https://picsum.photos/seed/${a.articleId}_${a.partNo}/600/400",
+                            model = imageModel,
                             contentDescription = a.articleTitle,
                             contentScale = ContentScale.Crop,
                             modifier = Modifier.fillMaxWidth().aspectRatio(16f / 9f),

@@ -15,4 +15,5 @@ interface ParticleRepository {
     suspend fun setStatus(articleId: String, partNo: Int, status: ReadingStatus)
     suspend fun getResumePartNo(articleId: String): Int
     suspend fun sync(): Result<Unit>
+    fun allPanels(): Flow<List<Panel>>
 }
